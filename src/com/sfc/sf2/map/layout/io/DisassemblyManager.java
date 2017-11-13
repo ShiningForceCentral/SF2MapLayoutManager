@@ -31,9 +31,12 @@ public class DisassemblyManager {
     private short inputWord = 0;
     private int inputCursor = -2;
     private int inputBitCursor = 16;
-    private List<Short> outputData = null;
+    private short[] outputData = null;
     private Tile[] outputTiles = null;
     private StringBuilder debugSb = null;
+    
+    private int blocksetCursor = 2;
+    private int blockCursor = 0;
     
     Color[] palette = null;
     Tile[] tileset = new Tile[128*5];
@@ -45,10 +48,10 @@ public class DisassemblyManager {
         MapLayout layout = new MapLayout();
         try{
             com.sfc.sf2.map.block.io.DisassemblyManager blockManager = new com.sfc.sf2.map.block.io.DisassemblyManager(); 
-            MapBlock[] blocks = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
+            MapBlock[] blockSet = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
 
-            if(blocks!=null){
-                layout = parseLayoutData();
+            if(blockSet!=null){
+                layout = parseLayoutData(blockSet, layoutPath);
             }
         }catch(Exception e){
              System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
@@ -59,18 +62,123 @@ public class DisassemblyManager {
         return layout;
     }
     
-    private MapLayout parseLayoutData(){
-        MapLayout layout = null;
-        MapBlock[] blocks = null;
+    private MapLayout parseLayoutData(MapBlock[] blockSet, String layoutPath){
+        MapLayout layout = new MapLayout();
+        MapBlock[] blocks = new MapBlock[64*64];
         try{
+            /*for(int i=0;i<blockSet.length;i++){
+                blocks[i] = blockSet[i];
+            }*/
+            Path layoutpath = Paths.get(layoutPath);
+            inputData = Files.readAllBytes(layoutpath);
+            while(blockCursor<64*64){
+                
+                MapBlock block = new MapBlock();
+                
+                
+                if(getNextBit()==0){
+                    if(getNextBit()==0){
+                        /* 00 */
+                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - Output next block from block set.");
+                        blocksetCursor++;
+                        block.setTiles(blockSet[blocksetCursor].getTiles());
+                        applyFlags(block);
+                        blocks[blockCursor] = block;                        
+                        blockCursor++;
+                    }else{
+                        /* 01 */
+                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - Copy section.");
+                        int count = 0;
+                        while(getNextBit()==0){
+                            count++;
+                        }
+                        int cursor = count;
+                        int value = 0;
+                        while(cursor>0){
+                            value = value * 2 + getNextBit();
+                            cursor--;
+                        }
+                        int result = value + (2<<count-1);
+                        System.out.println("count="+count+", value="+value+", result="+result);
+                        int offset = (getNextBit()==1)?1:64;
+                        for(int i=0;i<result;i++){
+                            blocks[blockCursor] = blocks[blockCursor-offset];
+                            blockCursor++;
+                        }
+                        //System.out.println(debugSb.substring(debugSb.length()-1-2));
+                        //System.out.println("outputData="+outputData);
+                    }
+                }else{
+                    if(getNextBit()==0){
+                        if(getNextBit()==0){
+                            /* 100 */
+                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputRightTileFromHistory");
+                            //outputRightTileFromHistory();
+                        }else{
+                            /* 101 */
+                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputBottomTileFromHistory");
+                            //outputBottomTileFromHistory();
+                        }
+                    }else{
+                        if(getNextBit()==0){
+                            /* 110 */
+                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputNextTileWithSameFlags");
+                            //outputNextTileWithSameFlags();
+                        }else{
+                            /* 111 */
+                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputNextTileWithNewFlags");
+                            //outputNextTileWithNewFlags();
+                        }
+                    }
+                    break;
+                }                
+                
+                
 
-                      
+                
+            }
         }catch(Exception e){
              System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.parseGraphics() - Error while parsing block data : "+e);
              e.printStackTrace();
-        } 
+        }             
+        for(int i=0;i<blocks.length;i++){
+            if(blocks[i]==null){
+                blocks[i] = blockSet[0];
+            }
+        }  
+        layout.setBlocks(blocks);
         return layout;
     }   
+    
+    private void applyFlags(MapBlock block){
+        short flags = 0;
+        if(getNextBit()==0){
+            if(getNextBit()==0){
+                /* 00 : no flag set */
+            }else{
+                /* 01 : $C000*/
+                flags = (short)0xC000;
+            }
+        }else{
+            if(getNextBit()==0){
+                if(getNextBit()==0){
+                    /* 100 : $4000 */
+                    flags = (short)0x4000;
+                }else{
+                    /* 101 : $8000 */
+                    flags = (short)0x8000;
+                }
+            }else{
+                /* 11 : next 6 bits = flag mask XXXX XX00 0000 0000 */
+                flags = (short)(getNextBit() * 0x8000
+                        + getNextBit() * 0x4000
+                        + getNextBit() * 0x2000
+                        + getNextBit() * 0x1000
+                        + getNextBit() * 0x0800
+                        + getNextBit() * 0x0400);
+            }
+        }   
+    }
     
     private static short getNextWord(byte[] data, int cursor){
         ByteBuffer bb = ByteBuffer.allocate(2);
