@@ -27,6 +27,10 @@ public class DisassemblyManager {
 
     private static final int MAPLAYOUT_TILES_LENGTH = 128*5;
     
+    private static final int COMMAND_LEFTMAP = 0;
+    private static final int COMMAND_UPPERMAP = 1;
+    private static final int COMMAND_CUSTOMVALUE = 2;
+    
     private byte[] inputData;
     private short inputWord = 0;
     private int inputCursor = -2;
@@ -35,8 +39,11 @@ public class DisassemblyManager {
     private Tile[] outputTiles = null;
     private StringBuilder debugSb = null;
     
-    private int blocksetCursor = 2;
-    private int blockCursor = 0;
+    private int blocksetCursor;
+    private int blockCursor;
+
+    MapBlock[][] leftHistoryMap = null;
+    MapBlock[][] upperHistoryMap = null;    
     
     Color[] palette = null;
     Tile[] tileset = new Tile[128*5];
@@ -65,6 +72,10 @@ public class DisassemblyManager {
     private MapLayout parseLayoutData(MapBlock[] blockSet, String layoutPath){
         MapLayout layout = new MapLayout();
         MapBlock[] blocks = new MapBlock[64*64];
+        leftHistoryMap = new MapBlock[blockSet.length][4];
+        upperHistoryMap = new MapBlock[blockSet.length][4];
+        blocksetCursor = 2;
+        blockCursor = 0;
         try{
             /*for(int i=0;i<blockSet.length;i++){
                 blocks[i] = blockSet[i];
@@ -82,8 +93,19 @@ public class DisassemblyManager {
                         System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - Output next block from block set.");
                         blocksetCursor++;
                         block.setTiles(blockSet[blocksetCursor].getTiles());
+                        block.setIndex(blockSet[blocksetCursor].getIndex());
                         applyFlags(block);
-                        blocks[blockCursor] = block;                        
+                        blocks[blockCursor] = block; 
+                        if(blockCursor>0){
+                            saveBlockToLeftStackMap(blocks[blockCursor-1].getIndex(), block);
+                        }else{
+                            saveBlockToLeftStackMap(0, block);
+                        }
+                        if(blockCursor>63){
+                            saveBlockToUpperStackMap(blocks[blockCursor-64].getIndex(), block);
+                        }else{
+                            saveBlockToUpperStackMap(0, block);
+                        }
                         blockCursor++;
                     }else{
                         /* 01 */
@@ -98,43 +120,153 @@ public class DisassemblyManager {
                             value = value * 2 + getNextBit();
                             cursor--;
                         }
-                        int result = value + (2<<count-1);
+                        int result = value + (1<<count);
                         System.out.println("count="+count+", value="+value+", result="+result);
                         int offset = (getNextBit()==1)?1:64;
                         for(int i=0;i<result;i++){
-                            blocks[blockCursor] = blocks[blockCursor-offset];
-                            blockCursor++;
+                            if(blockCursor<64*64){
+                                blocks[blockCursor] = blocks[blockCursor-offset];
+                                blockCursor++;
+                            }
                         }
                         //System.out.println(debugSb.substring(debugSb.length()-1-2));
                         //System.out.println("outputData="+outputData);
                     }
                 }else{
-                    if(getNextBit()==0){
+                    /* 1... check if left block history stack available */
+                    int commandType;
+                    int leftBlockCursor = (blockCursor>0)?blocks[blockCursor-1].getIndex():0;
+                    int upperBlockCursor = (blockCursor>63)?blocks[blockCursor-64].getIndex():0;
+                    if(leftHistoryMap[leftBlockCursor][0]!=null){
+                        /* 1... left block stack available, check next bit */
                         if(getNextBit()==0){
-                            /* 100 */
-                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputRightTileFromHistory");
-                            //outputRightTileFromHistory();
+                            /* 10 : Get block from left block history map */
+                            System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 : Get block from left block history map.");
+                            commandType = COMMAND_LEFTMAP;
                         }else{
-                            /* 101 */
-                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputBottomTileFromHistory");
-                            //outputBottomTileFromHistory();
+                            /* 11... check if upper block history stack available */
+                            if(upperHistoryMap[upperBlockCursor][0]!=null){
+                                /* 11... check next bit */
+                                if(getNextBit()==0){
+                                    /* 110 : Get block from upper block history map */
+                                    System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 110 : Get block from upper block history map.");
+                                    commandType = COMMAND_UPPERMAP;
+                                }else{
+                                    /* 111 : custom value */
+                                    System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 111 : Custom value.");
+                                    commandType = COMMAND_CUSTOMVALUE;
+                                }
+                            }else{
+                                /* 11 with no upper stack : Custom value */
+                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no upper stack : Custom value.");
+                                commandType = COMMAND_CUSTOMVALUE;
+                            }
                         }
                     }else{
-                        if(getNextBit()==0){
-                            /* 110 */
-                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputNextTileWithSameFlags");
-                            //outputNextTileWithSameFlags();
+                        /* 1... check if upper block history stack available */
+                        if(upperHistoryMap[upperBlockCursor][0]!=null){
+                            /* 1... check next bit */
+                            if(getNextBit()==0){
+                                /* 10 with no left stack : Get block from upper block history map */
+                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 with no left stack : Get block from upper block history map.");
+                                commandType = COMMAND_UPPERMAP;
+                            }else{
+                                /* 11 with no left stack : custom value */
+                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no left stack : Custom value.");
+                                commandType = COMMAND_CUSTOMVALUE;
+                            }
                         }else{
-                            /* 111 */
-                            //System.out.println("commandNumber=$" + Integer.toHexString(initialCommandNumber-remainingCommandNumber)+" - outputNextTileWithNewFlags");
-                            //outputNextTileWithNewFlags();
+                            /* 1 with no left and upper stack : Custom value*/
+                            System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 1 with no left or upper stack : Custom value.");
+                            commandType = COMMAND_CUSTOMVALUE;
                         }
                     }
-                    break;
-                }                
-                
-                
+                    int stackSize = 0;
+                    int stackTarget = 0;
+                    MapBlock targetBlock = null;
+                    switch(commandType){
+                        
+                        case COMMAND_LEFTMAP :
+                            if(leftHistoryMap[leftBlockCursor][1]==null){
+                                targetBlock = leftHistoryMap[leftBlockCursor][0];
+                                System.out.println("Stack contains only one entry : get entry 0.");
+                            }else{
+                                for(int i=0;i<4;i++){
+                                    if(leftHistoryMap[leftBlockCursor][i]!=null){
+                                        stackSize++;
+                                    }
+                                }
+                                while(stackSize>1){
+                                    stackSize--;
+                                    if(getNextBit()==0){
+                                        stackTarget++;
+                                    }else{
+                                        break;
+                                    }
+                                }
+                                System.out.println("Get stack entry "+stackTarget);
+                                targetBlock = leftHistoryMap[leftBlockCursor][stackTarget];
+                            }
+                            block.setTiles(targetBlock.getTiles());
+                            block.setIndex(targetBlock.getIndex());
+                            break;
+                        
+                        case COMMAND_UPPERMAP :
+                            if(upperHistoryMap[upperBlockCursor][1]==null){
+                                targetBlock = upperHistoryMap[upperBlockCursor][0];
+                                System.out.println("Stack contains only one entry : get entry 0.");
+                            }else{
+                                for(int i=0;i<4;i++){
+                                    if(upperHistoryMap[upperBlockCursor][i]!=null){
+                                        stackSize++;
+                                    }
+                                }
+                                while(stackSize>1){
+                                    stackSize--;
+                                    if(getNextBit()==0){
+                                        stackTarget++;
+                                    }else{
+                                        break;
+                                    }
+                                }
+                                System.out.println("Get stack entry "+stackTarget);
+                                targetBlock = upperHistoryMap[upperBlockCursor][stackTarget];
+                            }
+                            block.setTiles(targetBlock.getTiles());
+                            block.setIndex(targetBlock.getIndex());
+                            break;
+                            
+                        case COMMAND_CUSTOMVALUE :
+                            int length = Integer.toString(blocksetCursor,2).length();
+                            int value = 0;
+                            while(length>0){
+                                value = value * 2 + getNextBit();
+                                length--;
+                            }
+                            targetBlock = blockSet[value];
+                            block.setTiles(targetBlock.getTiles());
+                            block.setIndex(targetBlock.getIndex());
+                            applyFlags(block);
+                            break;
+                    }
+                    
+                    
+                    blocks[blockCursor] = block;
 
+                    if(blockCursor>0){
+                        saveBlockToLeftStackMap(blocks[blockCursor-1].getIndex(), block);
+                    }else{
+                        saveBlockToLeftStackMap(0, block);
+                    }
+                    if(blockCursor>63){
+                        saveBlockToUpperStackMap(blocks[blockCursor-64].getIndex(), block);
+                    }else{
+                        saveBlockToUpperStackMap(0, block);
+                    }                    
+                    
+                    blockCursor++;
+                    
+                }     
                 
             }
         }catch(Exception e){
@@ -157,7 +289,7 @@ public class DisassemblyManager {
                 /* 00 : no flag set */
             }else{
                 /* 01 : $C000*/
-                flags = (short)0xC000;
+                flags = (short)0x8000;
             }
         }else{
             if(getNextBit()==0){
@@ -166,7 +298,7 @@ public class DisassemblyManager {
                     flags = (short)0x4000;
                 }else{
                     /* 101 : $8000 */
-                    flags = (short)0x8000;
+                    flags = (short)0xC000;
                 }
             }else{
                 /* 11 : next 6 bits = flag mask XXXX XX00 0000 0000 */
@@ -178,6 +310,57 @@ public class DisassemblyManager {
                         + getNextBit() * 0x0400);
             }
         }   
+    }
+    
+    private void saveBlockToLeftStackMap(int leftBlockIndex, MapBlock block){
+        MapBlock[] currentStack = leftHistoryMap[leftBlockIndex];
+        
+        if(!block.equals(currentStack[0])){
+            MapBlock[] newStack = new MapBlock[4];
+            leftHistoryMap[leftBlockIndex] = newStack;
+            newStack[0] = block;
+            int currentStackCursor = 0;
+            int newStackCursor = 1;
+            while(newStackCursor<4){
+                if(currentStack[currentStackCursor]!=null){
+                    if(!block.equals(currentStack[currentStackCursor])){
+                        newStack[newStackCursor] = currentStack[currentStackCursor];
+                        currentStackCursor++;
+                        newStackCursor++;
+                    }else{
+                        currentStackCursor++;
+                    }
+                }else{
+                    return;
+                }
+            }
+        }
+        
+    }
+    
+    private void saveBlockToUpperStackMap(int upperBlockIndex, MapBlock block){
+        MapBlock[] currentStack = upperHistoryMap[upperBlockIndex];
+        
+        if(!block.equals(currentStack[0])){
+            MapBlock[] newStack = new MapBlock[4];
+            upperHistoryMap[upperBlockIndex] = newStack;
+            newStack[0] = block;
+            int currentStackCursor = 0;
+            int newStackCursor = 1;
+            while(newStackCursor<4){
+                if(currentStack[currentStackCursor]!=null){
+                    if(!block.equals(currentStack[currentStackCursor])){
+                        newStack[newStackCursor] = currentStack[currentStackCursor];
+                        currentStackCursor++;
+                        newStackCursor++;
+                    }else{
+                        currentStackCursor++;
+                    }
+                }else{
+                    return;
+                }
+            }
+        }
     }
     
     private static short getNextWord(byte[] data, int cursor){
