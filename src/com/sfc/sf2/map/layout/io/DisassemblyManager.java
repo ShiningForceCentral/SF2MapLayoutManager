@@ -65,6 +65,7 @@ public class DisassemblyManager {
              e.printStackTrace();
         }         
                 
+        System.out.println("debugSb="+debugSb.toString());
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
         return layout;
     }
@@ -76,6 +77,7 @@ public class DisassemblyManager {
         upperHistoryMap = new MapBlock[blockSet.length][4];
         blocksetCursor = 2;
         blockCursor = 0;
+        debugSb = new StringBuilder();
         try{
             /*for(int i=0;i<blockSet.length;i++){
                 blocks[i] = blockSet[i];
@@ -86,11 +88,12 @@ public class DisassemblyManager {
                 
                 MapBlock block = new MapBlock();
                 
+                debugSb.append(" ");
                 
                 if(getNextBit()==0){
                     if(getNextBit()==0){
                         /* 00 */
-                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - Output next block from block set.");
+                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 00 : Output next block from block set.");
                         blocksetCursor++;
                         block.setTiles(blockSet[blocksetCursor].getTiles());
                         block.setIndex(blockSet[blocksetCursor].getIndex());
@@ -109,7 +112,7 @@ public class DisassemblyManager {
                         blockCursor++;
                     }else{
                         /* 01 */
-                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - Copy section.");
+                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 01 : Copy section.");
                         int count = 0;
                         while(getNextBit()==0){
                             count++;
@@ -121,11 +124,17 @@ public class DisassemblyManager {
                             cursor--;
                         }
                         int result = value + (1<<count);
-                        System.out.println("count="+count+", value="+value+", result="+result);
+                        System.out.println(" count="+count+", value="+value+", result="+result);
                         int offset = (getNextBit()==1)?1:64;
                         for(int i=0;i<result;i++){
                             if(blockCursor<64*64){
-                                blocks[blockCursor] = blocks[blockCursor-offset];
+                                MapBlock copy = new MapBlock();
+                                MapBlock source = blocks[blockCursor-offset];
+                                copy.setTiles(source.getTiles());
+                                copy.setIndex(source.getIndex());
+                                copy.setFlagMask(source.getFlagMask());
+                                blocks[blockCursor] = copy;
+                                System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
                                 blockCursor++;
                             }
                         }
@@ -189,7 +198,7 @@ public class DisassemblyManager {
                         case COMMAND_LEFTMAP :
                             if(leftHistoryMap[leftBlockCursor][1]==null){
                                 targetBlock = leftHistoryMap[leftBlockCursor][0];
-                                System.out.println("Stack contains only one entry : get entry 0.");
+                                System.out.println(" Stack contains only one entry : get entry 0.");
                             }else{
                                 for(int i=0;i<4;i++){
                                     if(leftHistoryMap[leftBlockCursor][i]!=null){
@@ -204,17 +213,18 @@ public class DisassemblyManager {
                                         break;
                                     }
                                 }
-                                System.out.println("Get stack entry "+stackTarget);
+                                System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = leftHistoryMap[leftBlockCursor][stackTarget];
                             }
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
+                            block.setFlagMask(targetBlock.getFlagMask());
                             break;
                         
                         case COMMAND_UPPERMAP :
                             if(upperHistoryMap[upperBlockCursor][1]==null){
                                 targetBlock = upperHistoryMap[upperBlockCursor][0];
-                                System.out.println("Stack contains only one entry : get entry 0.");
+                                System.out.println(" Stack contains only one entry : get entry 0.");
                             }else{
                                 for(int i=0;i<4;i++){
                                     if(upperHistoryMap[upperBlockCursor][i]!=null){
@@ -229,11 +239,12 @@ public class DisassemblyManager {
                                         break;
                                     }
                                 }
-                                System.out.println("Get stack entry "+stackTarget);
+                                System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = upperHistoryMap[upperBlockCursor][stackTarget];
                             }
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
+                            block.setFlagMask(targetBlock.getFlagMask());
                             break;
                             
                         case COMMAND_CUSTOMVALUE :
@@ -243,6 +254,7 @@ public class DisassemblyManager {
                                 value = value * 2 + getNextBit();
                                 length--;
                             }
+                            System.out.println(" Value="+value);
                             targetBlock = blockSet[value];
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
@@ -266,7 +278,12 @@ public class DisassemblyManager {
                     
                     blockCursor++;
                     
-                }     
+                    
+                    
+                }   
+                
+                System.out.println(" Output block = $" + Integer.toHexString(block.getIndex())+" / "+block.getIndex());
+                System.out.println(debugSb.substring(debugSb.lastIndexOf(" ")));  
                 
             }
         }catch(Exception e){
@@ -310,6 +327,7 @@ public class DisassemblyManager {
                         + getNextBit() * 0x0400);
             }
         }   
+        block.setFlagMask(flags);
     }
     
     private void saveBlockToLeftStackMap(int leftBlockIndex, MapBlock block){
@@ -369,6 +387,7 @@ public class DisassemblyManager {
         bb.put(data[cursor+1]);
         bb.put(data[cursor]);
         short s = bb.getShort(0);
+        System.out.println("Next input word = $"+Integer.toString(s, 16)+" / "+Integer.toString(s, 2));
         return s;
     }    
     
@@ -381,7 +400,7 @@ public class DisassemblyManager {
         } 
         bit = (inputWord>>(15-inputBitCursor)) & 1;
         inputBitCursor++;
-        //debugSb.append(bit);
+        debugSb.append(bit);
         return bit;
     }
 
