@@ -18,27 +18,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static com.sfc.sf2.graphics.compressed.StackGraphicsEncoder.bytesToHex;
 
 /**
  *
  * @author wiz
  */
 public class DisassemblyManager {
-
-    private static final int MAPLAYOUT_TILES_LENGTH = 128*5;
     
     private static final int COMMAND_LEFTMAP = 0;
     private static final int COMMAND_UPPERMAP = 1;
     private static final int COMMAND_CUSTOMVALUE = 2;
     
+    com.sfc.sf2.map.block.io.DisassemblyManager blockManager = new com.sfc.sf2.map.block.io.DisassemblyManager();
+    
     private byte[] inputData;
     private short inputWord = 0;
     private int inputCursor = -2;
     private int inputBitCursor = 16;
-    private short[] outputData = null;
-    private Tile[] outputTiles = null;
     private StringBuilder debugSb = null;
     
+    MapBlock[] blockSet = null;
     private int blocksetCursor;
     private int blockCursor;
 
@@ -47,15 +47,12 @@ public class DisassemblyManager {
     
     Color[] palette = null;
     Tile[] tileset = new Tile[128*5];
-    private Short[] rightTileHistory = new Short[0x800];
-    private Short[] bottomTileHistory = new Short[0x800];
     
     public MapLayout importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = new MapLayout();
         try{
-            com.sfc.sf2.map.block.io.DisassemblyManager blockManager = new com.sfc.sf2.map.block.io.DisassemblyManager(); 
-            MapBlock[] blockSet = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
+            blockSet = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
 
             if(blockSet!=null){
                 layout = parseLayoutData(blockSet, layoutPath);
@@ -132,7 +129,7 @@ public class DisassemblyManager {
                                 MapBlock source = blocks[blockCursor-offset];
                                 copy.setTiles(source.getTiles());
                                 copy.setIndex(source.getIndex());
-                                copy.setFlagMask(source.getFlagMask());
+                                copy.setFlags(source.getFlags());
                                 blocks[blockCursor] = copy;
                                 System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
                                 blockCursor++;
@@ -218,7 +215,7 @@ public class DisassemblyManager {
                             }
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
-                            block.setFlagMask(targetBlock.getFlagMask());
+                            block.setFlags(targetBlock.getFlags());
                             break;
                         
                         case COMMAND_UPPERMAP :
@@ -244,7 +241,7 @@ public class DisassemblyManager {
                             }
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
-                            block.setFlagMask(targetBlock.getFlagMask());
+                            block.setFlags(targetBlock.getFlags());
                             break;
                             
                         case COMMAND_CUSTOMVALUE :
@@ -327,7 +324,7 @@ public class DisassemblyManager {
                         + getNextBit() * 0x0400);
             }
         }   
-        block.setFlagMask(flags);
+        block.setFlags(flags&0xFFFF);
     }
     
     private void saveBlockToLeftStackMap(int leftBlockIndex, MapBlock block){
@@ -406,12 +403,12 @@ public class DisassemblyManager {
 
     public void exportDisassembly(MapBlock[] blocks, String blocksFilePath, MapLayout layout, String layoutFilePath){
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Exporting disassembly ...");
-        try {
-            com.sfc.sf2.map.block.io.DisassemblyManager blockManager = new com.sfc.sf2.map.block.io.DisassemblyManager(); 
-            byte[] blockBytes = produceLayoutBytes(layout);
-            Path graphicsFilePath = Paths.get(layoutFilePath);
-            Files.write(graphicsFilePath,blockBytes);
-            System.out.println(blockBytes.length + " bytes into " + graphicsFilePath);
+        try { 
+            byte[] layoutBytes = produceLayoutBytes(layout);
+            blockManager.exportDisassembly(blockSet, blocksFilePath);
+            Path layoutFilepath = Paths.get(layoutFilePath);
+            Files.write(layoutFilepath,layoutBytes);
+            System.out.println(layoutBytes.length + " bytes into " + layoutFilepath);
         } catch (Exception ex) {
             Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
             ex.printStackTrace();
@@ -421,11 +418,359 @@ public class DisassemblyManager {
     }     
     
     private byte[] produceLayoutBytes(MapLayout layout){
-        StringBuilder outputSb = new StringBuilder();
-        byte[] output = null;
-
         
+        blockSet = produceNewBlockset(blockSet, layout);
+        
+        leftHistoryMap = new MapBlock[blockSet.length][4];
+        upperHistoryMap = new MapBlock[blockSet.length][4];
+        
+        StringBuilder outputSb = new StringBuilder();
+        outputSb.append(" ");
+        byte[] output;        
+        blocksetCursor = 3;
+        blockCursor = 0;        
+        
+        String leftCopyCandidate;
+        int leftCopyLength;
+        String upperCopyCandidate;
+        int upperCopyLength;
+        String leftHistoryCandidate;
+        String upperHistoryCandidate;
+        String nextBlockCandidate;
+        String customBlockCandidate;
+        
+        MapBlock[] blocks = layout.getBlocks();
+        
+        while(blockCursor<64*64){
+
+            leftCopyCandidate = null;
+            leftCopyLength = 0;
+            upperCopyCandidate = null;
+            upperCopyLength = 0;
+            leftHistoryCandidate = null;
+            upperHistoryCandidate = null;
+            nextBlockCandidate = null;
+            customBlockCandidate = null;
+            
+            
+            MapBlock block = blocks[blockCursor];
+            System.out.println("Block $"+Integer.toString(block.getIndex(),16)+" / $"+Integer.toString(block.getFlags(),16));
+            MapBlock leftBlock = null;
+            int leftHistoryCursor = 0;
+            if(blockCursor>0){
+                leftBlock = blocks[blockCursor-1];
+                leftHistoryCursor = leftBlock.getIndex();
+            }
+            MapBlock upperBlock = null;
+            int upperHistoryCursor = 0;
+            if(blockCursor>63){
+                upperBlock = blocks[blockCursor-64];
+                upperHistoryCursor = upperBlock.getIndex();
+            }
+            
+            /* Produce candidate commands */ 
+            
+            if(block.equals(leftBlock)){
+                /* Produce leftCopyCandidate with length */
+                leftCopyLength = 1;
+                while(blockCursor+leftCopyLength<blocks.length && blocks[blockCursor+leftCopyLength].equals(blocks[blockCursor-1+leftCopyLength])){
+                    leftCopyLength++;
+                }
+                int powerOfTwo = 0;
+                while((1<<powerOfTwo)<=leftCopyLength){
+                    powerOfTwo++;
+                }
+                powerOfTwo--;
+                int rest = leftCopyLength - (1<<powerOfTwo);
+                StringBuilder commandSb = new StringBuilder();
+                commandSb.append("01");
+                int zeros = powerOfTwo;
+                while(zeros>0){
+                    commandSb.append("0");
+                    zeros--;
+                }
+                commandSb.append("1");
+                if(powerOfTwo>0){
+                    commandSb.append(Integer.toString(rest,2));
+                }
+                commandSb.append("1");
+                leftCopyCandidate = commandSb.toString();
+                System.out.println(" leftCopyCandidate="+leftCopyCandidate+" - "+leftCopyLength+" blocks");
+            }
+            
+            if(block.equals(upperBlock)){
+                /* Produce upperCopyCandidate with length */
+                upperCopyLength = 1;
+                while(blockCursor+upperCopyLength<blocks.length && blocks[blockCursor+upperCopyLength].equals(blocks[blockCursor-64+upperCopyLength])){
+                    upperCopyLength++;
+                }
+                int powerOfTwo = 0;
+                while((1<<powerOfTwo)<=upperCopyLength){
+                    powerOfTwo++;
+                }
+                powerOfTwo--;
+                int rest = upperCopyLength - (1<<powerOfTwo);
+                StringBuilder commandSb = new StringBuilder();
+                commandSb.append("01");
+                int zeros = powerOfTwo;
+                while(zeros>0){
+                    commandSb.append("0");
+                    zeros--;
+                }
+                commandSb.append("1");
+                if(powerOfTwo>0){
+                    commandSb.append(Integer.toString(rest,2));
+                }
+                commandSb.append("0");
+                upperCopyCandidate = commandSb.toString();
+                System.out.println(" upperCopyCandidate="+upperCopyCandidate+" - "+upperCopyLength+" blocks");
+            }
+            
+            int leftBlockHistoryIndex = getLeftHistoryIndex(leftHistoryCursor, block);
+            if(leftBlockHistoryIndex>=0){
+                /* Produce leftHistoryCandidate*/
+                StringBuilder commandSb = new StringBuilder();
+                commandSb.append("10");
+                MapBlock[] stack = leftHistoryMap[leftHistoryCursor];
+                if(stack[1]==null){
+                    /* No index to add */
+                }else{
+                    int stackSize = 0;
+                    for(int i=0;i<4;i++){
+                        if(stack[i]!=null){
+                            stackSize++;
+                        }
+                    }  
+                    for(int i=0;i<=stackSize;i++){
+                        if(i==stackSize || block.equals(stack[i])){
+                            commandSb.append("1");
+                            break;
+                        }else{
+                            commandSb.append("0");
+                        }
+                    }
+                }
+                leftHistoryCandidate = commandSb.toString();
+                System.out.println(" leftHistoryCandidate="+leftHistoryCandidate);
+            }
+            
+            int upperBlockHistoryIndex = getUpperHistoryIndex(upperHistoryCursor, block);
+            if(upperBlockHistoryIndex>=0){
+                /* Produce upperHistoryCandidate*/
+                StringBuilder commandSb = new StringBuilder();
+                commandSb.append("10");
+                MapBlock[] stack = upperHistoryMap[upperHistoryCursor];
+                if(stack[1]==null){
+                    /* No index to add */
+                }else{
+                    int stackSize = 0;
+                    for(int i=0;i<4;i++){
+                        if(stack[i]!=null){
+                            stackSize++;
+                        }
+                    }  
+                    for(int i=0;i<=stackSize;i++){
+                        if(i==stackSize || block.equals(stack[i])){
+                            commandSb.append("1");
+                            break;
+                        }else{
+                            commandSb.append("0");
+                        }
+                    }
+                }
+                if(leftHistoryMap[leftHistoryCursor][0]!=null){
+                    commandSb.insert(0, "1");
+                }
+                upperHistoryCandidate = commandSb.toString();
+                System.out.println(" upperHistoryCandidate="+upperHistoryCandidate);
+            }
+            
+            if(leftCopyCandidate==null && upperCopyCandidate==null && leftHistoryCandidate==null && upperHistoryCandidate==null){
+                if(blocksetCursor<blockSet.length && block.getIndex()==blockSet[blocksetCursor].getIndex()){
+                    /* Produce nextBlockCandidate */
+                    nextBlockCandidate = "00" + produceFlagBits(block.getFlags());
+                    System.out.println(" nextBlockCandidate="+nextBlockCandidate);
+                }
+                
+                if(nextBlockCandidate==null){
+                    /* Produce customBlockCandidate */
+                    StringBuilder commandSb = new StringBuilder();
+                    commandSb.append("1");
+                    int length = Integer.toString(blocksetCursor,2).length();
+                    String value = Integer.toString(block.getIndex(),2);
+                    while(value.length()<length){
+                        value = "0" + value;
+                    }
+                    commandSb.append(value);
+                    commandSb.append(produceFlagBits(block.getFlags()));
+                    if(leftHistoryMap[leftHistoryCursor][0]!=null && upperHistoryMap[upperHistoryCursor][0]!=null){
+                        commandSb.insert(0, "11");
+                    }else if(leftHistoryMap[leftHistoryCursor][0]!=null || upperHistoryMap[upperHistoryCursor][0]!=null){
+                        commandSb.insert(0, "1");
+                    }
+                    customBlockCandidate = commandSb.toString();
+                    System.out.println(" customBlockCandidate="+customBlockCandidate);
+                }
+                
+            }
+            
+            /* Select command to output */
+            if(leftCopyLength>1 || upperCopyLength>1){
+                if(leftCopyLength>=upperCopyLength){
+                    outputSb.append(leftCopyCandidate);
+                    blockCursor+=leftCopyLength;
+                }else{
+                    outputSb.append(upperCopyCandidate);
+                    blockCursor+=upperCopyLength;
+                }
+            }else{
+                if(nextBlockCandidate!=null){
+                    outputSb.append(nextBlockCandidate);
+                    savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
+                    blockCursor++;
+                    blocksetCursor++;
+                }else if(leftCopyCandidate!=null){
+                    outputSb.append(leftCopyCandidate);
+                    blockCursor+=leftCopyLength;
+                }else if(upperCopyCandidate!=null){
+                    outputSb.append(upperCopyCandidate);
+                    blockCursor+=upperCopyLength;
+                }else if(leftHistoryCandidate!=null){
+                    outputSb.append(leftHistoryCandidate);
+                    savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
+                    blockCursor++;
+                }else if(upperHistoryCandidate!=null){
+                    outputSb.append(upperHistoryCandidate);
+                    savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
+                    blockCursor++;
+                }else if(customBlockCandidate!=null){
+                    outputSb.append(customBlockCandidate);
+                    savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
+                    blockCursor++;
+                }else{
+                    System.out.println("ERROR : NO CANDIDATE COMMAND FOUND FOR BLOCK.");
+                }
+                
+            }
+            
+            System.out.println(" Selected command ="+outputSb.substring(outputSb.lastIndexOf(" ")));     
+            outputSb.append(" ");
+            
+        }
+        
+        
+        
+        System.out.println("output = " + outputSb.toString());
+        outputSb = new StringBuilder(outputSb.toString().replace(" ",""));
+        
+        while(outputSb.length()%16 != 0){
+            outputSb.append("0");
+        }
+        /* Byte array conversion */
+        output = new byte[outputSb.length()/8];
+        for(int i=0;i<output.length;i++){
+            Byte b = (byte)(Integer.valueOf(outputSb.substring(i*8, i*8+8),2)&0xFF);
+            output[i] = b;
+        }
+        System.out.println("output bytes length = " + output.length);
+        System.out.println("output = " + bytesToHex(output));
         return output;
+    }
+    
+    private void savehistoryMaps(MapBlock leftBlock, MapBlock upperBlock, int blockCursor, MapBlock block){                
+        if(blockCursor>0){
+            saveBlockToLeftStackMap(leftBlock.getIndex(), block);
+        }else{
+            saveBlockToLeftStackMap(0, block);
+        }
+        if(blockCursor>63){
+            saveBlockToUpperStackMap(upperBlock.getIndex(), block);
+        }else{
+            saveBlockToUpperStackMap(0, block);
+        }
+    }
+    
+    private MapBlock[] produceNewBlockset(MapBlock[] blockSet, MapLayout layout){
+        List<Integer> newBlocksetValues = new ArrayList<Integer>();
+        MapBlock[] newBlockSet = null;
+        MapBlock[] blocks = layout.getBlocks();
+        newBlocksetValues.add(blockSet[0].getIndex());
+        newBlocksetValues.add(blockSet[1].getIndex());
+        newBlocksetValues.add(blockSet[2].getIndex());
+        for(int i=0;i<blocks.length;i++){
+            if(!newBlocksetValues.contains(blocks[i].getIndex())){
+                newBlocksetValues.add(blocks[i].getIndex());
+            }
+        }
+        for(int i=0;i<blockSet.length;i++){
+            if(!newBlocksetValues.contains(blockSet[i].getIndex())){
+                newBlocksetValues.add(blockSet[i].getIndex());
+            }
+        }
+        newBlockSet = new MapBlock[newBlocksetValues.size()];
+        for(int i=0;i<newBlockSet.length;i++){
+            newBlockSet[i] = blockSet[newBlocksetValues.get(i)];
+        }
+        return newBlockSet;
+    }
+    
+    private int getLeftHistoryIndex(int leftHistoryCursor, MapBlock block){
+        int index = -1;
+        MapBlock[] stack = leftHistoryMap[leftHistoryCursor];
+        if(stack[0]==null){
+            return index;
+        }else{
+            for(int i=0;i<4;i++){
+                if(block.equals(stack[i])){
+                    index = i;
+                    break;
+                }
+            }
+        }
+        return index;
+    }
+    
+    private int getUpperHistoryIndex(int upperHistoryCursor, MapBlock block){
+        int index = -1;
+        MapBlock[] stack = upperHistoryMap[upperHistoryCursor];
+        if(stack[0]==null){
+            return index;
+        }else{
+            for(int i=0;i<4;i++){
+                if(block.equals(stack[i])){
+                    index = i;
+                    break;
+                }
+            }
+        }
+        return index;
+    }
+    
+    private String produceFlagBits(int flags){
+        String flagBits = null;
+        switch(flags){
+            case 0x8000 :
+                flagBits = "01";
+                break;
+            case 0x4000 :
+                flagBits = "100";
+                break;
+            case 0xC000 :
+                flagBits = "101";
+                break;
+            default :
+                StringBuilder sb = new StringBuilder();
+                for(int i=0;i<6;i++){
+                    if((flags>>(16-i))==0){
+                        sb.append("0");
+                    }else{
+                        sb.append("1");
+                    }
+                }
+                flagBits = sb.toString();
+                break;
+        }
+        return flagBits;
     }
     
 }
