@@ -630,7 +630,7 @@ public class DisassemblyManager {
             
             /* Select command to output */
             if(leftCopyLength>1 || upperCopyLength>1){
-                if(leftCopyLength>=upperCopyLength){
+                if(leftCopyLength>upperCopyLength){
                     outputSb.append(leftCopyCandidate);
                     blockCursor+=leftCopyLength;
                 }else{
@@ -643,12 +643,12 @@ public class DisassemblyManager {
                     savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
                     blockCursor++;
                     blocksetCursor++;
-                }else if(leftCopyCandidate!=null){
-                    outputSb.append(leftCopyCandidate);
-                    blockCursor+=leftCopyLength;
                 }else if(upperCopyCandidate!=null){
                     outputSb.append(upperCopyCandidate);
                     blockCursor+=upperCopyLength;
+                }else if(leftCopyCandidate!=null){
+                    outputSb.append(leftCopyCandidate);
+                    blockCursor+=leftCopyLength;
                 }else if(leftHistoryCandidate!=null){
                     outputSb.append(leftHistoryCandidate);
                     savehistoryMaps(leftBlock, upperBlock, blockCursor, block);
@@ -678,7 +678,7 @@ public class DisassemblyManager {
         outputSb = new StringBuilder(outputSb.toString().replace(" ",""));
         
         while(outputSb.length()%16 != 0){
-            outputSb.append("0");
+            outputSb.append("1");
         }
         /* Byte array conversion */
         output = new byte[outputSb.length()/8];
