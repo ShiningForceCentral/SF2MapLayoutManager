@@ -251,7 +251,7 @@ public class DisassemblyManager {
                                 value = value * 2 + getNextBit();
                                 length--;
                             }
-                            System.out.println(" Value="+value);
+                            System.out.println(" blocksetCursor=="+blocksetCursor+" / "+Integer.toString(blocksetCursor,2)+", length="+Integer.toString(blocksetCursor,2).length()+", Value="+value);
                             targetBlock = blockSet[value];
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
@@ -491,7 +491,12 @@ public class DisassemblyManager {
                 }
                 commandSb.append("1");
                 if(powerOfTwo>0){
-                    commandSb.append(Integer.toString(rest,2));
+                    String restString = Integer.toString(rest,2);
+                    while(restString.length()<powerOfTwo){
+                        restString = "0" + restString;
+                    }
+                    commandSb.append(restString);
+                    
                 }
                 commandSb.append("1");
                 leftCopyCandidate = commandSb.toString();
@@ -519,7 +524,11 @@ public class DisassemblyManager {
                 }
                 commandSb.append("1");
                 if(powerOfTwo>0){
-                    commandSb.append(Integer.toString(rest,2));
+                    String restString = Integer.toString(rest,2);
+                    while(restString.length()<powerOfTwo){
+                        restString = "0" + restString;
+                    }
+                    commandSb.append(restString);
                 }
                 commandSb.append("0");
                 upperCopyCandidate = commandSb.toString();
@@ -542,8 +551,10 @@ public class DisassemblyManager {
                         }
                     }  
                     for(int i=0;i<=stackSize;i++){
-                        if(i==stackSize || block.equals(stack[i])){
-                            commandSb.append("1");
+                        if(block.equals(stack[i])){
+                            if(i<stackSize-1){
+                                commandSb.append("1");
+                            }
                             break;
                         }else{
                             commandSb.append("0");
@@ -570,8 +581,10 @@ public class DisassemblyManager {
                         }
                     }  
                     for(int i=0;i<=stackSize;i++){
-                        if(i==stackSize || block.equals(stack[i])){
-                            commandSb.append("1");
+                        if(block.equals(stack[i])){
+                            if(i<stackSize-1){
+                                commandSb.append("1");
+                            }
                             break;
                         }else{
                             commandSb.append("0");
@@ -596,7 +609,8 @@ public class DisassemblyManager {
                     /* Produce customBlockCandidate */
                     StringBuilder commandSb = new StringBuilder();
                     commandSb.append("1");
-                    int length = Integer.toString(blocksetCursor,2).length();
+                    int length = Integer.toString(blocksetCursor-1,2).length();
+                    System.out.println(" blocksetCursor="+(blocksetCursor-1)+" / "+Integer.toString(blocksetCursor-1,2)+", length="+length);
                     String value = Integer.toString(block.getIndex(),2);
                     while(value.length()<length){
                         value = "0" + value;
@@ -749,6 +763,9 @@ public class DisassemblyManager {
     private String produceFlagBits(int flags){
         String flagBits = null;
         switch(flags){
+            case 0 :
+                flagBits = "00";
+                break;
             case 0x8000 :
                 flagBits = "01";
                 break;
@@ -760,8 +777,9 @@ public class DisassemblyManager {
                 break;
             default :
                 StringBuilder sb = new StringBuilder();
+                sb.append("11");
                 for(int i=0;i<6;i++){
-                    if((flags>>(16-i))==0){
+                    if(((flags>>(15-i))&1)==0){
                         sb.append("0");
                     }else{
                         sb.append("1");
