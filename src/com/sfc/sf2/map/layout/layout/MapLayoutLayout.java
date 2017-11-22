@@ -8,9 +8,15 @@ package com.sfc.sf2.map.layout.layout;
 import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.block.MapBlock;
 import com.sfc.sf2.map.layout.MapLayout;
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import javax.swing.JPanel;
@@ -19,18 +25,25 @@ import javax.swing.JPanel;
  *
  * @author wiz
  */
-public class MapLayoutLayout extends JPanel {
-    
-    private static int renderCounter = 0;
+public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotionListener {
     
     private static final int DEFAULT_TILES_PER_ROW = 64*3;
     
     private int tilesPerRow = DEFAULT_TILES_PER_ROW;
     private MapLayout layout;
+    private MapBlock[] blockset;
     private int currentDisplaySize = 1;
     
     private BufferedImage currentImage;
     private boolean redraw = true;
+    private int renderCounter = 0;
+    
+
+   public MapLayoutLayout() {
+      addMouseListener(this);
+      addMouseMotionListener(this);
+   }
+   
     
     @Override
     protected void paintComponent(Graphics g) {
@@ -49,6 +62,7 @@ public class MapLayoutLayout extends JPanel {
     public BufferedImage buildImage(MapLayout layout, int tilesPerRow, boolean pngExport){
         renderCounter++;
         System.out.println("Render "+renderCounter);
+        this.layout = layout;
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
             int imageHeight = 64*3*8;
@@ -145,6 +159,59 @@ public class MapLayoutLayout extends JPanel {
 
     public void setMapLayout(MapLayout layout) {
         this.layout = layout;
+    }
+
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+    @Override
+    public void mousePressed(MouseEvent e) {
+        int x = e.getX() / (currentDisplaySize * 3*8);
+        int y = e.getY() / (currentDisplaySize * 3*8);
+        
+        setBlockValue(x, y, 256);
+        this.repaint();
+        System.out.println("press "+x+" - "+y);
+    }
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        
+    }
+    
+    @Override
+    public void mouseDragged(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        
+    }
+    
+    public void setBlockValue(int x, int y, int value){
+        MapBlock[] blocks = layout.getBlocks();
+        MapBlock block = blocks[y*64+x];
+        block.setIndex(value);
+        block.setImage(null);
+        block.setTiles(blockset[block.getIndex()].getTiles());
+        
+        redraw = true;
+    }
+
+    public MapBlock[] getBlockset() {
+        return blockset;
+    }
+
+    public void setBlockset(MapBlock[] blockset) {
+        this.blockset = blockset;
     }
     
     

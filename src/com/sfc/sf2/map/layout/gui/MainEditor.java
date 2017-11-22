@@ -628,6 +628,7 @@ public class MainEditor extends javax.swing.JFrame {
         jPanel2.setLayout(new GridLayout(1,1));
         maplayoutLayout = new MapLayoutLayout();
         maplayoutLayout.setMapLayout(maplayoutManager.getLayout());
+        maplayoutLayout.setBlockset(maplayoutManager.getBlockset());
         jPanel2.add(maplayoutLayout);
         jPanel2.setSize(maplayoutLayout.getWidth(), maplayoutLayout.getHeight());
         jPanel2.revalidate();

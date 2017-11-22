@@ -25,10 +25,12 @@ public class MapLayoutManager {
     private DisassemblyManager disassemblyManager = new DisassemblyManager();
     private MapBlock[] blocks;
     private MapLayout layout;
+    private MapBlock[] blockset;
        
     public void importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
         layout = disassemblyManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, layoutPath);
+        blockset = disassemblyManager.getBlockset();
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
     }
     
@@ -63,4 +65,14 @@ public class MapLayoutManager {
     public void setLayout(MapLayout layout) {
         this.layout = layout;
     }
+
+    public MapBlock[] getBlockset() {
+        return blockset;
+    }
+
+    public void setBlockset(MapBlock[] blockset) {
+        this.blockset = blockset;
+    }
+    
+    
 }

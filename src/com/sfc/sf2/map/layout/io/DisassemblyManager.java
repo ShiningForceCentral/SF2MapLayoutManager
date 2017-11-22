@@ -38,7 +38,7 @@ public class DisassemblyManager {
     private int inputBitCursor = 16;
     private StringBuilder debugSb = null;
     
-    MapBlock[] blockSet = null;
+    MapBlock[] blockset = null;
     private int blocksetCursor;
     private int blockCursor;
 
@@ -52,10 +52,10 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = new MapLayout();
         try{
-            blockSet = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
+            blockset = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
 
-            if(blockSet!=null){
-                layout = parseLayoutData(blockSet, layoutPath);
+            if(blockset!=null){
+                layout = parseLayoutData(blockset, layoutPath);
             }
         }catch(Exception e){
              System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
@@ -405,7 +405,7 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Exporting disassembly ...");
         try { 
             byte[] layoutBytes = produceLayoutBytes(layout);
-            blockManager.exportDisassembly(blockSet, blocksFilePath);
+            blockManager.exportDisassembly(blockset, blocksFilePath);
             Path layoutFilepath = Paths.get(layoutFilePath);
             Files.write(layoutFilepath,layoutBytes);
             System.out.println(layoutBytes.length + " bytes into " + layoutFilepath);
@@ -419,10 +419,10 @@ public class DisassemblyManager {
     
     private byte[] produceLayoutBytes(MapLayout layout){
         
-        blockSet = produceNewBlockset(blockSet, layout);
+        blockset = produceNewBlockset(blockset, layout);
         
-        leftHistoryMap = new MapBlock[blockSet.length][4];
-        upperHistoryMap = new MapBlock[blockSet.length][4];
+        leftHistoryMap = new MapBlock[blockset.length][4];
+        upperHistoryMap = new MapBlock[blockset.length][4];
         
         StringBuilder outputSb = new StringBuilder();
         outputSb.append(" ");
@@ -599,7 +599,7 @@ public class DisassemblyManager {
             }
             
             if(leftCopyCandidate==null && upperCopyCandidate==null && leftHistoryCandidate==null && upperHistoryCandidate==null){
-                if(blocksetCursor<blockSet.length && block.getIndex()==blockSet[blocksetCursor].getIndex()){
+                if(blocksetCursor<blockset.length && block.getIndex()==blockset[blocksetCursor].getIndex()){
                     /* Produce nextBlockCandidate */
                     nextBlockCandidate = "00" + produceFlagBits(block.getFlags());
                     System.out.println(" nextBlockCandidate="+nextBlockCandidate);
@@ -705,27 +705,42 @@ public class DisassemblyManager {
     }
     
     private MapBlock[] produceNewBlockset(MapBlock[] blockSet, MapLayout layout){
-        List<Integer> newBlocksetValues = new ArrayList<Integer>();
-        MapBlock[] newBlockSet = null;
+        List<Integer> newBlocksetValues = new ArrayList<>();
+        MapBlock[] newBlockset;
         MapBlock[] blocks = layout.getBlocks();
+        /* Add base blocks : empty, closed chest and open chest */
         newBlocksetValues.add(blockSet[0].getIndex());
         newBlocksetValues.add(blockSet[1].getIndex());
         newBlocksetValues.add(blockSet[2].getIndex());
+        /* Add blocks in layout's appearing order */
         for(int i=0;i<blocks.length;i++){
             if(!newBlocksetValues.contains(blocks[i].getIndex())){
                 newBlocksetValues.add(blocks[i].getIndex());
             }
         }
+        /* Add remaining unused blocks */
         for(int i=0;i<blockSet.length;i++){
             if(!newBlocksetValues.contains(blockSet[i].getIndex())){
                 newBlocksetValues.add(blockSet[i].getIndex());
             }
         }
-        newBlockSet = new MapBlock[newBlocksetValues.size()];
-        for(int i=0;i<newBlockSet.length;i++){
-            newBlockSet[i] = blockSet[newBlocksetValues.get(i)];
+        newBlockset = new MapBlock[newBlocksetValues.size()];
+        for(int i=0;i<newBlockset.length;i++){
+            newBlockset[i] = blockSet[newBlocksetValues.get(i)];
         }
-        return newBlockSet;
+        for(int i=0;i<blocks.length;i++){
+            MapBlock block = blocks[i];
+            for(int j=0;j<newBlockset.length;j++){
+                if(block.getIndex()==newBlockset[j].getIndex()){
+                    block.setIndex(j);
+                    break;
+                }
+            }
+        }
+        for(int i=0;i<newBlockset.length;i++){
+            newBlockset[i].setIndex(i);
+        }
+        return newBlockset;
     }
     
     private int getLeftHistoryIndex(int leftHistoryCursor, MapBlock block){
@@ -790,5 +805,16 @@ public class DisassemblyManager {
         }
         return flagBits;
     }
+
+    public MapBlock[] getBlockset() {
+        return blockset;
+    }
+
+    public void setBlockset(MapBlock[] blockset) {
+        this.blockset = blockset;
+    }
+    
+    
+    
     
 }
