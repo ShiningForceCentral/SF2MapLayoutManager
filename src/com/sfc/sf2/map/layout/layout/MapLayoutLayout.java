@@ -7,19 +7,26 @@ package com.sfc.sf2.map.layout.layout;
 
 import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.block.MapBlock;
+import com.sfc.sf2.map.block.layout.MapBlockLayout;
 import com.sfc.sf2.map.layout.MapLayout;
 import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 /**
  *
@@ -28,6 +35,11 @@ import javax.swing.JPanel;
 public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotionListener {
     
     private static final int DEFAULT_TILES_PER_ROW = 64*3;
+    
+    private static final int ACTION_CHANGE_BLOCK_VALUE = 0;
+    private static final int ACTION_CHANGE_BLOCK_FLAGS = 1;
+    
+    private List<int[]> actions = new ArrayList<int[]>();
     
     private int tilesPerRow = DEFAULT_TILES_PER_ROW;
     private MapLayout layout;
@@ -61,7 +73,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     
     public BufferedImage buildImage(MapLayout layout, int tilesPerRow, boolean pngExport){
         renderCounter++;
-        System.out.println("Render "+renderCounter);
+        System.out.println("Map render "+renderCounter);
         this.layout = layout;
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
@@ -177,10 +189,21 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     public void mousePressed(MouseEvent e) {
         int x = e.getX() / (currentDisplaySize * 3*8);
         int y = e.getY() / (currentDisplaySize * 3*8);
-        
-        setBlockValue(x, y, 256);
+        switch (e.getButton()) {
+            case MouseEvent.BUTTON1:
+                setBlockValue(x, y, MapBlockLayout.selectedBlockIndex0);
+                break;
+            case MouseEvent.BUTTON2:
+                MapBlockLayout.selectedBlockIndex0 = layout.getBlocks()[y*64+x].getIndex();
+                break;
+            case MouseEvent.BUTTON3:
+                setBlockValue(x, y, MapBlockLayout.selectedBlockIndex1);
+                break;
+            default:
+                break;
+        }
         this.repaint();
-        System.out.println("press "+x+" - "+y);
+        System.out.println("Blockset press "+e.getButton()+" "+x+" - "+y);
     }
     @Override
     public void mouseReleased(MouseEvent e) {
@@ -199,11 +222,32 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     public void setBlockValue(int x, int y, int value){
         MapBlock[] blocks = layout.getBlocks();
         MapBlock block = blocks[y*64+x];
-        block.setIndex(value);
-        block.setImage(null);
-        block.setTiles(blockset[block.getIndex()].getTiles());
-        
-        redraw = true;
+        if(block.getIndex()!=value){
+            int[] action = new int[3];
+            action[0] = ACTION_CHANGE_BLOCK_VALUE;
+            action[1] = y*64+x;
+            action[2] = block.getIndex();
+            block.setIndex(value);
+            block.setImage(null);
+            block.setTiles(blockset[block.getIndex()].getTiles());
+            actions.add(action);
+            redraw = true;
+        }
+    }
+    
+    public void revertLastAction(){
+        if(actions.size()>0){
+            int[] action = actions.get(actions.size()-1);
+            if(action[0]==ACTION_CHANGE_BLOCK_VALUE){
+                MapBlock block = layout.getBlocks()[action[1]];
+                block.setIndex(action[2]);
+                block.setImage(null);
+                block.setTiles(blockset[block.getIndex()].getTiles());
+                actions.remove(actions.size()-1);
+                redraw = true;
+                this.repaint();
+            }
+        }
     }
 
     public MapBlock[] getBlockset() {
