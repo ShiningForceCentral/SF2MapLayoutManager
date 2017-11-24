@@ -9,6 +9,8 @@
         <Property name="fileSelectionMode" type="int" value="1"/>
       </Properties>
     </Component>
+    <Component class="javax.swing.ButtonGroup" name="buttonGroup1">
+    </Component>
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
@@ -187,7 +189,7 @@
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane2" alignment="0" pref="568" max="32767" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
@@ -210,7 +212,7 @@
                                     </DimensionLayout>
                                     <DimensionLayout dim="1">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <EmptySpace min="0" pref="549" max="32767" attributes="0"/>
+                                          <EmptySpace min="0" pref="554" max="32767" attributes="0"/>
                                       </Group>
                                     </DimensionLayout>
                                   </Layout>
@@ -231,7 +233,7 @@
                       <Layout>
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jSplitPane4" max="32767" attributes="0"/>
+                              <Component id="jSplitPane4" pref="499" max="32767" attributes="0"/>
                               <Component id="jPanel12" max="32767" attributes="0"/>
                           </Group>
                         </DimensionLayout>
@@ -289,20 +291,16 @@
                                   <Layout>
                                     <DimensionLayout dim="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jScrollPane3" pref="227" max="32767" attributes="0"/>
-                                          <Group type="102" attributes="0">
-                                              <Component id="jButton1" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                          </Group>
+                                          <Component id="jScrollPane3" pref="0" max="32767" attributes="0"/>
+                                          <Component id="jPanel14" alignment="1" max="32767" attributes="0"/>
                                       </Group>
                                     </DimensionLayout>
                                     <DimensionLayout dim="1">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
-                                              <Component id="jScrollPane3" min="-2" pref="416" max="-2" attributes="0"/>
+                                              <Component id="jScrollPane3" min="-2" pref="400" max="-2" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="jButton1" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="0" pref="67" max="32767" attributes="0"/>
+                                              <Component id="jPanel14" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                     </DimensionLayout>
@@ -333,14 +331,74 @@
                                         </Container>
                                       </SubComponents>
                                     </Container>
-                                    <Component class="javax.swing.JButton" name="jButton1">
-                                      <Properties>
-                                        <Property name="text" type="java.lang.String" value="Undo"/>
-                                      </Properties>
-                                      <Events>
-                                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
-                                      </Events>
-                                    </Component>
+                                    <Container class="javax.swing.JPanel" name="jPanel14">
+
+                                      <Layout>
+                                        <DimensionLayout dim="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="1" attributes="0">
+                                                  <EmptySpace max="32767" attributes="0"/>
+                                                  <Component id="jRadioButton2" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="jRadioButton1" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="jRadioButton3" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                        </DimensionLayout>
+                                        <DimensionLayout dim="1">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Group type="103" groupAlignment="3" attributes="0">
+                                                      <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="jRadioButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="jRadioButton3" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="jRadioButton2" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  </Group>
+                                                  <EmptySpace pref="72" max="32767" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                        </DimensionLayout>
+                                      </Layout>
+                                      <SubComponents>
+                                        <Component class="javax.swing.JButton" name="jButton1">
+                                          <Properties>
+                                            <Property name="text" type="java.lang.String" value="Undo"/>
+                                          </Properties>
+                                          <Events>
+                                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+                                          </Events>
+                                        </Component>
+                                        <Component class="javax.swing.JRadioButton" name="jRadioButton1">
+                                          <Properties>
+                                            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                              <ComponentRef name="buttonGroup1"/>
+                                            </Property>
+                                            <Property name="text" type="java.lang.String" value="Obstr"/>
+                                          </Properties>
+                                        </Component>
+                                        <Component class="javax.swing.JRadioButton" name="jRadioButton2">
+                                          <Properties>
+                                            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                              <ComponentRef name="buttonGroup1"/>
+                                            </Property>
+                                            <Property name="text" type="java.lang.String" value="Block"/>
+                                          </Properties>
+                                        </Component>
+                                        <Component class="javax.swing.JRadioButton" name="jRadioButton3">
+                                          <Properties>
+                                            <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                                              <ComponentRef name="buttonGroup1"/>
+                                            </Property>
+                                            <Property name="text" type="java.lang.String" value="Stairs"/>
+                                          </Properties>
+                                        </Component>
+                                      </SubComponents>
+                                    </Container>
                                   </SubComponents>
                                 </Container>
                               </SubComponents>
@@ -853,6 +911,8 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="jSpinner1" min="-2" pref="43" max="-2" attributes="0"/>
                                       <EmptySpace max="32767" attributes="0"/>
+                                      <Component id="jCheckBox1" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
@@ -872,6 +932,7 @@
                                               <Group type="103" alignment="3" groupAlignment="3" attributes="0">
                                                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   <Component id="jComboBox1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="jCheckBox1" alignment="3" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                       </Group>
@@ -938,6 +999,15 @@
                                   <SpinnerModel initial="8" maximum="1024" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                                 </Property>
                               </Properties>
+                            </Component>
+                            <Component class="javax.swing.JCheckBox" name="jCheckBox1">
+                              <Properties>
+                                <Property name="selected" type="boolean" value="true"/>
+                                <Property name="text" type="java.lang.String" value="Flags"/>
+                              </Properties>
+                              <Events>
+                                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckBox1ActionPerformed"/>
+                              </Events>
                             </Component>
                           </SubComponents>
                         </Container>

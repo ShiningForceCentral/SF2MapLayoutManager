@@ -13,6 +13,7 @@ import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +22,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     private static final int ACTION_CHANGE_BLOCK_VALUE = 0;
     private static final int ACTION_CHANGE_BLOCK_FLAGS = 1;
     
+    private MapBlock selectedBlock0;
+    
     private List<int[]> actions = new ArrayList<int[]>();
     
     private int tilesPerRow = DEFAULT_TILES_PER_ROW;
@@ -49,6 +53,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     private BufferedImage currentImage;
     private boolean redraw = true;
     private int renderCounter = 0;
+    private boolean drawFlags = true;
     
 
    public MapLayoutLayout() {
@@ -87,6 +92,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                 for(int x=0;x<64;x++){
                     MapBlock block = blocks[y*64+x];
                     BufferedImage blockImage = block.getImage();
+                    BufferedImage flagImage = block.getFlagImage();
                     if(blockImage==null){
                         blockImage = new BufferedImage(3*8, 3*8 , BufferedImage.TYPE_BYTE_INDEXED, icm);
                         Graphics blockGraphics = blockImage.getGraphics();                    
@@ -102,6 +108,25 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                         block.setImage(blockImage);
                     }
                     graphics.drawImage(blockImage, x*3*8, y*3*8, null);
+                    if(drawFlags){
+                        if(flagImage==null){
+                            flagImage = new BufferedImage(3*8, 3*8, BufferedImage.TYPE_INT_ARGB);
+                            Graphics2D g2 = (Graphics2D) flagImage.getGraphics(); 
+                            if(block.getFlags()==0x8000){
+                                
+                                Line2D line1 = new Line2D.Double(6, 6, 18, 18);
+                                g2.draw(line1);
+                                Line2D line2 = new Line2D.Double(6, 18, 18, 6);
+                                g2.draw(line2);
+                                /*flagImage.setRGB(1, 1, Color.RED.getRGB());
+                                flagImage.setRGB(1, 2, Color.RED.getRGB());
+                                flagImage.setRGB(2, 1, Color.RED.getRGB());
+                                flagImage.setRGB(2, 2, Color.RED.getRGB());*/
+                            }
+                            block.setFlagImage(flagImage);
+                        }
+                        graphics.drawImage(flagImage, x*3*8, y*3*8, null);
+                    }
                 }
             } 
             redraw = false;
@@ -192,9 +217,13 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
                 setBlockValue(x, y, MapBlockLayout.selectedBlockIndex0);
+                if(selectedBlock0!=null && selectedBlock0.getIndex()==MapBlockLayout.selectedBlockIndex0){
+                    setFlagValue(x, y, selectedBlock0.getFlags());
+                }
                 break;
             case MouseEvent.BUTTON2:
-                MapBlockLayout.selectedBlockIndex0 = layout.getBlocks()[y*64+x].getIndex();
+                selectedBlock0 = layout.getBlocks()[y*64+x];
+                MapBlockLayout.selectedBlockIndex0 = selectedBlock0.getIndex();
                 break;
             case MouseEvent.BUTTON3:
                 setBlockValue(x, y, MapBlockLayout.selectedBlockIndex1);
@@ -235,6 +264,21 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         }
     }
     
+    public void setFlagValue(int x, int y, int value){
+        MapBlock[] blocks = layout.getBlocks();
+        MapBlock block = blocks[y*64+x];
+        if(block.getFlags()!=value){
+            int[] action = new int[3];
+            action[0] = ACTION_CHANGE_BLOCK_FLAGS;
+            action[1] = y*64+x;
+            action[2] = block.getFlags();
+            block.setFlags(value);
+            block.setFlagImage(null);
+            actions.add(action);
+            redraw = true;
+        }
+    }
+    
     public void revertLastAction(){
         if(actions.size()>0){
             int[] action = actions.get(actions.size()-1);
@@ -243,6 +287,13 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                 block.setIndex(action[2]);
                 block.setImage(null);
                 block.setTiles(blockset[block.getIndex()].getTiles());
+                actions.remove(actions.size()-1);
+                redraw = true;
+                this.repaint();
+            }else if(action[0]==ACTION_CHANGE_BLOCK_FLAGS){
+                MapBlock block = layout.getBlocks()[action[1]];
+                block.setFlags(action[2]);
+                block.setFlagImage(null);
                 actions.remove(actions.size()-1);
                 redraw = true;
                 this.repaint();
@@ -256,6 +307,15 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
 
     public void setBlockset(MapBlock[] blockset) {
         this.blockset = blockset;
+    }
+
+    public boolean isDrawFlags() {
+        return drawFlags;
+    }
+
+    public void setDrawFlags(boolean drawFlags) {
+        this.drawFlags = drawFlags;
+        this.redraw = true;
     }
     
     
