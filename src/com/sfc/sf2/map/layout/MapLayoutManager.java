@@ -22,17 +22,34 @@ public class MapLayoutManager {
        
     private PaletteManager paletteManager = new PaletteManager();
     private GraphicsManager graphicsManager = new GraphicsManager();
-    private DisassemblyManager disassemblyManager = new DisassemblyManager();
+    private DisassemblyManager disassemblyManager = null;
     private MapBlock[] blocks;
     private MapLayout layout;
     private MapBlock[] blockset;
        
     public void importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
+        disassemblyManager = new DisassemblyManager();
         layout = disassemblyManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, layoutPath);
         blockset = disassemblyManager.getBlockset();
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
     }
+    
+    public void importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath){
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
+        disassemblyManager = new DisassemblyManager();
+        layout = disassemblyManager.importDisassembly(palettesPath, tilesetsPath, tilesetsFilePath, blocksPath, layoutPath);
+        blockset = disassemblyManager.getBlockset();
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
+    }
+    
+    public void importDisassembly(String palettesPath, String tilesetsPath, String mapPath){
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
+        disassemblyManager = new DisassemblyManager();
+        layout = disassemblyManager.importDisassembly(palettesPath, tilesetsPath, mapPath);
+        blockset = disassemblyManager.getBlockset();
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
+    }    
     
     public void exportDisassembly(String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Exporting disassembly ...");

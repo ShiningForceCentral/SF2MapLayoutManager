@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static com.sfc.sf2.graphics.compressed.StackGraphicsEncoder.bytesToHex;
+import java.io.File;
+import java.io.IOException;
 
 /**
  *
@@ -48,6 +50,118 @@ public class DisassemblyManager {
     Color[] palette = null;
     Tile[] tileset = new Tile[128*5];
     
+    public MapLayout importDisassembly(String palettesPath, String tilesetsPath, String mapPath){
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
+        MapLayout layout = null;
+        try{
+            
+            String tilesetsFilePath = mapPath + "00-tilesets.bin";
+            String blocksPath = mapPath + "0-blocks.bin";
+            String layoutPath = mapPath + "1-layout.bin";
+            
+            layout = importDisassembly(palettesPath, tilesetsPath, tilesetsFilePath , blocksPath, layoutPath);
+
+        }catch(Exception e){
+             System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
+             e.printStackTrace();
+        }         
+                
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
+        return layout;
+    }      
+    
+    public MapLayout importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath){
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
+        MapLayout layout = null;
+        String palettePath = "";
+        String[] tilesetPaths = {"","","","",""};
+        try{
+            int[] indexes = parseTilesetsFile(tilesetsFilePath);
+            int paletteIndex = indexes[0];
+            
+            List<String> paletteFilenames = new ArrayList<String>();
+            String pDir = palettesPath.substring(0, palettesPath.lastIndexOf(System.getProperty("file.separator")));
+            String pPattern = palettesPath.substring(palettesPath.lastIndexOf(System.getProperty("file.separator"))+1);
+            File pDirectory = new File(pDir);
+            File[] pFiles = pDirectory.listFiles();
+            System.out.println("Listing palette files with pattern : "+palettesPath+"*.bin");
+            for(File f : pFiles){
+                if(f.getName().startsWith(pPattern) && f.getName().endsWith(".bin")){
+                    paletteFilenames.add(f.getName());
+                    System.out.println("Adding : "+f.getName());
+                }
+            }
+            if(paletteFilenames.isEmpty()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : no palette file imported. Wrong path or filename prefix ?");
+            } else if(paletteIndex > paletteFilenames.size()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : Index "+paletteIndex+" id superior to unmber of palette files found : "+paletteFilenames.size());
+            } else {
+                palettePath = pDir + System.getProperty("file.separator") + paletteFilenames.get(paletteIndex);
+                System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected palette file : "+palettePath);
+            }
+
+
+            
+            List<String> tilesetFilenames = new ArrayList<String>();
+            String tDir = tilesetsPath.substring(0, tilesetsPath.lastIndexOf(System.getProperty("file.separator")));
+            String tPattern = tilesetsPath.substring(tilesetsPath.lastIndexOf(System.getProperty("file.separator"))+1);
+            File tDirectory = new File(tDir);
+            File[] tFiles = tDirectory.listFiles();
+            System.out.println("Listing tileset files with pattern : "+tilesetsPath+"*.bin");
+            for(File f : tFiles){
+                if(f.getName().startsWith(tPattern) && f.getName().endsWith(".bin")){
+                    tilesetFilenames.add(f.getName());
+                    System.out.println("Adding : "+f.getName());
+                }
+            }
+            if(tilesetFilenames.isEmpty()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : no tileset file imported. Wrong path or filename prefix ?");
+            } else {
+                for(int i=0;i<tilesetPaths.length;i++){
+                    if(indexes[i+1] > tilesetFilenames.size()){
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                    } else if(indexes[i+1]!=-1){
+                        tilesetPaths[i] = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
+                        System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+(i+1)+" : "+tilesetPaths[i]);
+                    } else{
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Tileset "+(i+1)+" is declared empty.");
+                    }
+                }               
+                
+            }              
+            
+            layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath);
+
+        }catch(Exception e){
+             System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
+             e.printStackTrace();
+        }         
+                
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
+        return layout;
+    }  
+    
+    private int[] parseTilesetsFile(String tilesetsFilePath){
+        int[] indexes = new int[6];
+        try {
+            Path tilesetspath = Paths.get(tilesetsFilePath);
+            if(!tilesetspath.toFile().exists()){
+                 System.err.println("ERROR - File not found : "+tilesetsFilePath);
+            }else{
+                byte[] data = Files.readAllBytes(tilesetspath);
+                indexes[0] = (int)(data[0]);
+                indexes[1] = (int)(data[1]);
+                indexes[2] = (int)(data[2]);
+                indexes[3] = (int)(data[3]);
+                indexes[4] = (int)(data[4]);
+                indexes[5] = (int)(data[5]);                
+            }        
+        } catch (IOException ex) {
+            Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return indexes;
+    }
+    
     public MapLayout importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = new MapLayout();
@@ -62,7 +176,7 @@ public class DisassemblyManager {
              e.printStackTrace();
         }         
                 
-        System.out.println("debugSb="+debugSb.toString());
+        //System.out.println("debugSb="+debugSb.toString());
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
         return layout;
     }
@@ -79,7 +193,12 @@ public class DisassemblyManager {
             /*for(int i=0;i<blockSet.length;i++){
                 blocks[i] = blockSet[i];
             }*/
+
+            
             Path layoutpath = Paths.get(layoutPath);
+            if(!layoutpath.toFile().exists()){
+                 System.err.println("ERROR - File not found : "+layoutPath);
+            }        
             inputData = Files.readAllBytes(layoutpath);
             while(blockCursor<64*64){
                 
@@ -90,7 +209,7 @@ public class DisassemblyManager {
                 if(getNextBit()==0){
                     if(getNextBit()==0){
                         /* 00 */
-                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 00 : Output next block from block set.");
+                        //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 00 : Output next block from block set.");
                         blocksetCursor++;
                         block.setTiles(blockSet[blocksetCursor].getTiles());
                         block.setIndex(blockSet[blocksetCursor].getIndex());
@@ -109,7 +228,7 @@ public class DisassemblyManager {
                         blockCursor++;
                     }else{
                         /* 01 */
-                        System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 01 : Copy section.");
+                        //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 01 : Copy section.");
                         int count = 0;
                         while(getNextBit()==0){
                             count++;
@@ -121,7 +240,7 @@ public class DisassemblyManager {
                             cursor--;
                         }
                         int result = value + (1<<count);
-                        System.out.println(" count="+count+", value="+value+", result="+result);
+                        //System.out.println(" count="+count+", value="+value+", result="+result);
                         int offset = (getNextBit()==1)?1:64;
                         for(int i=0;i<result;i++){
                             if(blockCursor<64*64){
@@ -131,7 +250,7 @@ public class DisassemblyManager {
                                 copy.setIndex(source.getIndex());
                                 copy.setFlags(source.getFlags());
                                 blocks[blockCursor] = copy;
-                                System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
+                                //System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
                                 blockCursor++;
                             }
                         }
@@ -147,7 +266,7 @@ public class DisassemblyManager {
                         /* 1... left block stack available, check next bit */
                         if(getNextBit()==0){
                             /* 10 : Get block from left block history map */
-                            System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 : Get block from left block history map.");
+                            //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 : Get block from left block history map.");
                             commandType = COMMAND_LEFTMAP;
                         }else{
                             /* 11... check if upper block history stack available */
@@ -155,16 +274,16 @@ public class DisassemblyManager {
                                 /* 11... check next bit */
                                 if(getNextBit()==0){
                                     /* 110 : Get block from upper block history map */
-                                    System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 110 : Get block from upper block history map.");
+                                    //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 110 : Get block from upper block history map.");
                                     commandType = COMMAND_UPPERMAP;
                                 }else{
                                     /* 111 : custom value */
-                                    System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 111 : Custom value.");
+                                    //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 111 : Custom value.");
                                     commandType = COMMAND_CUSTOMVALUE;
                                 }
                             }else{
                                 /* 11 with no upper stack : Custom value */
-                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no upper stack : Custom value.");
+                                //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no upper stack : Custom value.");
                                 commandType = COMMAND_CUSTOMVALUE;
                             }
                         }
@@ -174,16 +293,16 @@ public class DisassemblyManager {
                             /* 1... check next bit */
                             if(getNextBit()==0){
                                 /* 10 with no left stack : Get block from upper block history map */
-                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 with no left stack : Get block from upper block history map.");
+                                //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 10 with no left stack : Get block from upper block history map.");
                                 commandType = COMMAND_UPPERMAP;
                             }else{
                                 /* 11 with no left stack : custom value */
-                                System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no left stack : Custom value.");
+                                //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 11 with no left stack : Custom value.");
                                 commandType = COMMAND_CUSTOMVALUE;
                             }
                         }else{
                             /* 1 with no left and upper stack : Custom value*/
-                            System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 1 with no left or upper stack : Custom value.");
+                            //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 1 with no left or upper stack : Custom value.");
                             commandType = COMMAND_CUSTOMVALUE;
                         }
                     }
@@ -195,7 +314,7 @@ public class DisassemblyManager {
                         case COMMAND_LEFTMAP :
                             if(leftHistoryMap[leftBlockCursor][1]==null){
                                 targetBlock = leftHistoryMap[leftBlockCursor][0];
-                                System.out.println(" Stack contains only one entry : get entry 0.");
+                                //System.out.println(" Stack contains only one entry : get entry 0.");
                             }else{
                                 for(int i=0;i<4;i++){
                                     if(leftHistoryMap[leftBlockCursor][i]!=null){
@@ -210,7 +329,7 @@ public class DisassemblyManager {
                                         break;
                                     }
                                 }
-                                System.out.println(" Get stack entry "+stackTarget);
+                                //System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = leftHistoryMap[leftBlockCursor][stackTarget];
                             }
                             block.setTiles(targetBlock.getTiles());
@@ -221,7 +340,7 @@ public class DisassemblyManager {
                         case COMMAND_UPPERMAP :
                             if(upperHistoryMap[upperBlockCursor][1]==null){
                                 targetBlock = upperHistoryMap[upperBlockCursor][0];
-                                System.out.println(" Stack contains only one entry : get entry 0.");
+                                //System.out.println(" Stack contains only one entry : get entry 0.");
                             }else{
                                 for(int i=0;i<4;i++){
                                     if(upperHistoryMap[upperBlockCursor][i]!=null){
@@ -236,7 +355,7 @@ public class DisassemblyManager {
                                         break;
                                     }
                                 }
-                                System.out.println(" Get stack entry "+stackTarget);
+                                //System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = upperHistoryMap[upperBlockCursor][stackTarget];
                             }
                             block.setTiles(targetBlock.getTiles());
@@ -251,7 +370,7 @@ public class DisassemblyManager {
                                 value = value * 2 + getNextBit();
                                 length--;
                             }
-                            System.out.println(" blocksetCursor=="+blocksetCursor+" / "+Integer.toString(blocksetCursor,2)+", length="+Integer.toString(blocksetCursor,2).length()+", Value="+value);
+                            //System.out.println(" blocksetCursor=="+blocksetCursor+" / "+Integer.toString(blocksetCursor,2)+", length="+Integer.toString(blocksetCursor,2).length()+", Value="+value);
                             targetBlock = blockSet[value];
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
@@ -279,8 +398,8 @@ public class DisassemblyManager {
                     
                 }   
                 
-                System.out.println(" Output block = $" + Integer.toHexString(block.getIndex())+" / "+block.getIndex());
-                System.out.println(debugSb.substring(debugSb.lastIndexOf(" ")));  
+                //System.out.println(" Output block = $" + Integer.toHexString(block.getIndex())+" / "+block.getIndex());
+                //System.out.println(debugSb.substring(debugSb.lastIndexOf(" ")));  
                 
             }
         }catch(Exception e){
@@ -303,7 +422,7 @@ public class DisassemblyManager {
                 /* 00 : no flag set */
             }else{
                 /* 01 : $C000*/
-                flags = (short)0x8000;
+                flags = (short)0xC000;
             }
         }else{
             if(getNextBit()==0){
@@ -312,7 +431,7 @@ public class DisassemblyManager {
                     flags = (short)0x4000;
                 }else{
                     /* 101 : $8000 */
-                    flags = (short)0xC000;
+                    flags = (short)0x8000;
                 }
             }else{
                 /* 11 : next 6 bits = flag mask XXXX XX00 0000 0000 */
@@ -384,7 +503,7 @@ public class DisassemblyManager {
         bb.put(data[cursor+1]);
         bb.put(data[cursor]);
         short s = bb.getShort(0);
-        System.out.println("Next input word = $"+Integer.toString(s, 16)+" / "+Integer.toString(s, 2));
+        //System.out.println("Next input word = $"+Integer.toString(s, 16)+" / "+Integer.toString(s, 2));
         return s;
     }    
     
@@ -397,7 +516,7 @@ public class DisassemblyManager {
         } 
         bit = (inputWord>>(15-inputBitCursor)) & 1;
         inputBitCursor++;
-        debugSb.append(bit);
+        //debugSb.append(bit);
         return bit;
     }
 
@@ -454,7 +573,7 @@ public class DisassemblyManager {
             
             
             MapBlock block = blocks[blockCursor];
-            System.out.println("Block $"+Integer.toString(block.getIndex(),16)+" / $"+Integer.toString(block.getFlags(),16));
+            //System.out.println("Block $"+Integer.toString(block.getIndex(),16)+" / $"+Integer.toString(block.getFlags(),16));
             MapBlock leftBlock = null;
             int leftHistoryCursor = 0;
             if(blockCursor>0){
@@ -500,7 +619,7 @@ public class DisassemblyManager {
                 }
                 commandSb.append("1");
                 leftCopyCandidate = commandSb.toString();
-                System.out.println(" leftCopyCandidate="+leftCopyCandidate+" - "+leftCopyLength+" blocks");
+                //System.out.println(" leftCopyCandidate="+leftCopyCandidate+" - "+leftCopyLength+" blocks");
             }
             
             if(block.equals(upperBlock)){
@@ -532,7 +651,7 @@ public class DisassemblyManager {
                 }
                 commandSb.append("0");
                 upperCopyCandidate = commandSb.toString();
-                System.out.println(" upperCopyCandidate="+upperCopyCandidate+" - "+upperCopyLength+" blocks");
+                //System.out.println(" upperCopyCandidate="+upperCopyCandidate+" - "+upperCopyLength+" blocks");
             }
             
             int leftBlockHistoryIndex = getLeftHistoryIndex(leftHistoryCursor, block);
@@ -562,7 +681,7 @@ public class DisassemblyManager {
                     }
                 }
                 leftHistoryCandidate = commandSb.toString();
-                System.out.println(" leftHistoryCandidate="+leftHistoryCandidate);
+                //System.out.println(" leftHistoryCandidate="+leftHistoryCandidate);
             }
             
             int upperBlockHistoryIndex = getUpperHistoryIndex(upperHistoryCursor, block);
@@ -595,14 +714,14 @@ public class DisassemblyManager {
                     commandSb.insert(0, "1");
                 }
                 upperHistoryCandidate = commandSb.toString();
-                System.out.println(" upperHistoryCandidate="+upperHistoryCandidate);
+                //System.out.println(" upperHistoryCandidate="+upperHistoryCandidate);
             }
             
             if(leftCopyCandidate==null && upperCopyCandidate==null && leftHistoryCandidate==null && upperHistoryCandidate==null){
                 if(blocksetCursor<blockset.length && block.getIndex()==blockset[blocksetCursor].getIndex()){
                     /* Produce nextBlockCandidate */
                     nextBlockCandidate = "00" + produceFlagBits(block.getFlags());
-                    System.out.println(" nextBlockCandidate="+nextBlockCandidate);
+                    //System.out.println(" nextBlockCandidate="+nextBlockCandidate);
                 }
                 
                 if(nextBlockCandidate==null){
@@ -610,7 +729,7 @@ public class DisassemblyManager {
                     StringBuilder commandSb = new StringBuilder();
                     commandSb.append("1");
                     int length = Integer.toString(blocksetCursor-1,2).length();
-                    System.out.println(" blocksetCursor="+(blocksetCursor-1)+" / "+Integer.toString(blocksetCursor-1,2)+", length="+length);
+                    //System.out.println(" blocksetCursor="+(blocksetCursor-1)+" / "+Integer.toString(blocksetCursor-1,2)+", length="+length);
                     String value = Integer.toString(block.getIndex(),2);
                     while(value.length()<length){
                         value = "0" + value;
@@ -623,7 +742,7 @@ public class DisassemblyManager {
                         commandSb.insert(0, "1");
                     }
                     customBlockCandidate = commandSb.toString();
-                    System.out.println(" customBlockCandidate="+customBlockCandidate);
+                    //System.out.println(" customBlockCandidate="+customBlockCandidate);
                 }
                 
             }
@@ -667,14 +786,14 @@ public class DisassemblyManager {
                 
             }
             
-            System.out.println(" Selected command ="+outputSb.substring(outputSb.lastIndexOf(" ")));     
+            //System.out.println(" Selected command ="+outputSb.substring(outputSb.lastIndexOf(" ")));     
             outputSb.append(" ");
             
         }
         
         
         
-        System.out.println("output = " + outputSb.toString());
+        //System.out.println("output = " + outputSb.toString());
         outputSb = new StringBuilder(outputSb.toString().replace(" ",""));
         
         while(outputSb.length()%16 != 0){
@@ -687,7 +806,7 @@ public class DisassemblyManager {
             output[i] = b;
         }
         System.out.println("output bytes length = " + output.length);
-        System.out.println("output = " + bytesToHex(output));
+        //System.out.println("output = " + bytesToHex(output));
         return output;
     }
     
@@ -781,13 +900,13 @@ public class DisassemblyManager {
             case 0 :
                 flagBits = "00";
                 break;
-            case 0x8000 :
+            case 0xC000 :
                 flagBits = "01";
                 break;
             case 0x4000 :
                 flagBits = "100";
                 break;
-            case 0xC000 :
+            case 0x8000 :
                 flagBits = "101";
                 break;
             default :

@@ -53,13 +53,18 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     private BufferedImage currentImage;
     private boolean redraw = true;
     private int renderCounter = 0;
-    private boolean drawFlags = true;
+    private boolean drawFlags = false;
+    private boolean drawGrid = false;
     
+    private BufferedImage gridImage;
+    private BufferedImage obstructedImage;
+    private BufferedImage leftUpstairsImage;
+    private BufferedImage rightUpstairsImage;
 
-   public MapLayoutLayout() {
-      addMouseListener(this);
-      addMouseMotionListener(this);
-   }
+    public MapLayoutLayout() {
+       addMouseListener(this);
+       addMouseMotionListener(this);
+    }
    
     
     @Override
@@ -112,16 +117,12 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                         if(flagImage==null){
                             flagImage = new BufferedImage(3*8, 3*8, BufferedImage.TYPE_INT_ARGB);
                             Graphics2D g2 = (Graphics2D) flagImage.getGraphics(); 
-                            if(block.getFlags()==0x8000){
-                                
-                                Line2D line1 = new Line2D.Double(6, 6, 18, 18);
-                                g2.draw(line1);
-                                Line2D line2 = new Line2D.Double(6, 18, 18, 6);
-                                g2.draw(line2);
-                                /*flagImage.setRGB(1, 1, Color.RED.getRGB());
-                                flagImage.setRGB(1, 2, Color.RED.getRGB());
-                                flagImage.setRGB(2, 1, Color.RED.getRGB());
-                                flagImage.setRGB(2, 2, Color.RED.getRGB());*/
+                            if((block.getFlags()&0xC000)==0xC000){
+                                g2.drawImage(getObstructedImage(), 0, 0, null);
+                            }else if((block.getFlags()&0x8000)==0x8000){
+                                g2.drawImage(getRightUpstairs(), 0, 0, null);
+                            }else if((block.getFlags()&0x4000)==0x4000){
+                                g2.drawImage(getLeftUpstairs(), 0, 0, null);
                             }
                             block.setFlagImage(flagImage);
                         }
@@ -129,12 +130,71 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                     }
                 }
             } 
+            if(drawGrid){
+                graphics.drawImage(getGridImage(), 0, 0, null);
+            }            
             redraw = false;
             currentImage = resize(currentImage);
         }
                   
         return currentImage;
     }
+    
+    private BufferedImage getGridImage(){
+        if(gridImage==null){
+            gridImage = new BufferedImage(3*8*64, 3*8*64, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = (Graphics2D) gridImage.getGraphics(); 
+            g2.setColor(Color.BLACK);
+            for(int i=0;i<64;i++){
+                g2.drawLine(3*8+i*3*8, 0, 3*8+i*3*8, 3*8*64-1);
+                g2.drawLine(0, 3*8+i*3*8, 3*8*64-1, 3*8+i*3*8);
+            }
+        }
+        return gridImage;
+    }
+    
+    private BufferedImage getObstructedImage(){
+        if(obstructedImage==null){
+            obstructedImage = new BufferedImage(3*8, 3*8, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = (Graphics2D) obstructedImage.getGraphics();  
+            g2.setColor(Color.WHITE);
+            Line2D line1 = new Line2D.Double(6, 6, 18, 18);
+            g2.draw(line1);
+            Line2D line2 = new Line2D.Double(6, 18, 18, 6);
+            g2.draw(line2);
+        }
+        return obstructedImage;
+    }
+    
+    private BufferedImage getLeftUpstairs(){
+        if(leftUpstairsImage==null){
+            leftUpstairsImage = new BufferedImage(3*8, 3*8, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = (Graphics2D) leftUpstairsImage.getGraphics();  
+            g2.setColor(Color.BLUE);
+            Line2D line0 = new Line2D.Double(3-1, 3, 21-1, 21);
+            Line2D line1 = new Line2D.Double(3, 3, 21, 21);
+            Line2D line2 = new Line2D.Double(3+1, 3, 21+1, 21);
+            g2.draw(line0);
+            g2.draw(line1);
+            g2.draw(line2);
+        }
+        return leftUpstairsImage;
+    }   
+    
+    private BufferedImage getRightUpstairs(){
+        if(rightUpstairsImage==null){
+            rightUpstairsImage = new BufferedImage(3*8, 3*8, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = (Graphics2D) rightUpstairsImage.getGraphics();  
+            g2.setColor(Color.BLUE);
+            Line2D line0 = new Line2D.Double(3-1, 21, 21-1, 3);
+            Line2D line1 = new Line2D.Double(3, 21, 21, 3);
+            Line2D line2 = new Line2D.Double(3+1, 21, 21+1, 3);
+            g2.draw(line0);
+            g2.draw(line1);
+            g2.draw(line2);
+        }
+        return rightUpstairsImage;
+    }       
     
     private IndexColorModel buildIndexColorModel(Color[] colors){
         byte[] reds = new byte[16];
@@ -214,6 +274,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     public void mousePressed(MouseEvent e) {
         int x = e.getX() / (currentDisplaySize * 3*8);
         int y = e.getY() / (currentDisplaySize * 3*8);
+        
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
                 setBlockValue(x, y, MapBlockLayout.selectedBlockIndex0);
@@ -317,6 +378,41 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         this.drawFlags = drawFlags;
         this.redraw = true;
     }
+
+    public MapBlock getSelectedBlock0() {
+        return selectedBlock0;
+    }
+
+    public void setSelectedBlock0(MapBlock selectedBlock0) {
+        this.selectedBlock0 = selectedBlock0;
+    }
+
+    public List<int[]> getActions() {
+        return actions;
+    }
+
+    public void setActions(List<int[]> actions) {
+        this.actions = actions;
+    }
+
+    public boolean isRedraw() {
+        return redraw;
+    }
+
+    public void setRedraw(boolean redraw) {
+        this.redraw = redraw;
+    }
+
+    public boolean isDrawGrid() {
+        return drawGrid;
+    }
+
+    public void setDrawGrid(boolean drawGrid) {
+        this.drawGrid = drawGrid;
+        this.redraw = true;
+    }
+    
+    
     
     
 }
