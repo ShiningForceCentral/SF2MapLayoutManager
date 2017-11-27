@@ -7,6 +7,7 @@ package com.sfc.sf2.map.layout.layout;
 
 import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.block.MapBlock;
+import com.sfc.sf2.map.block.gui.BlockSlotPanel;
 import com.sfc.sf2.map.block.layout.MapBlockLayout;
 import com.sfc.sf2.map.layout.MapLayout;
 import java.awt.BasicStroke;
@@ -41,19 +42,21 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     
     private static final int ACTION_CHANGE_BLOCK_VALUE = 0;
     private static final int ACTION_CHANGE_BLOCK_FLAGS = 1;
-    private static final int ACTION_BULK_CHANGE = 1;
+    private static final int ACTION_MASS_COPY = 2;
+    
+    int lastMapX = 0;
+    int lastMapY = 0;
     
     public static final int MODE_BLOCK = 0;
     public static final int MODE_OBSTRUCTED = 1;
     public static final int MODE_STAIRS = 2;
     
-    JPanel leftSlot = null;
-    JPanel rightSlot = null;
-    JPanel parentLeft = null;
+    BlockSlotPanel leftSlot = null;
     
     private int currentMode = 0;
     
     private MapBlock selectedBlock0;
+    MapBlock[][] copiedBlocks;
     
     private List<int[]> actions = new ArrayList<int[]>();
     
@@ -85,8 +88,8 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     private BufferedImage hideImage;
 
     public MapLayoutLayout() {
-       addMouseListener(this);
-       addMouseMotionListener(this);
+        addMouseListener(this);
+        addMouseMotionListener(this);
     }
    
     
@@ -465,15 +468,45 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             case MODE_BLOCK :
                 switch (e.getButton()) {
                     case MouseEvent.BUTTON1:
-                        setBlockValue(x, y, MapBlockLayout.selectedBlockIndex0);
-                        if(selectedBlock0!=null && selectedBlock0.getIndex()==MapBlockLayout.selectedBlockIndex0){
-                            setFlagValue(x, y, selectedBlock0.getFlags());
+                        if(MapBlockLayout.selectedBlockIndex0!=-1){
+                            setBlockValue(x, y, MapBlockLayout.selectedBlockIndex0);
+                            if(selectedBlock0!=null && selectedBlock0.getIndex()==MapBlockLayout.selectedBlockIndex0){
+                                setFlagValue(x, y, selectedBlock0.getFlags());
+                            }
+                        }else{
+                            int height = copiedBlocks.length;
+                            int width = copiedBlocks[0].length;
+                            int[] action = new int[4+2*height*width];
+                            action[0] = ACTION_MASS_COPY;
+                            int blockIndex = y*64+x;
+                            action[1] = blockIndex;
+                            action[2] = width;
+                            action[3] = height;
+                            for(int j=0;j<height;j++){
+                                for(int i=0;i<width;i++){
+                                    if((blockIndex+j*64+i)<4096 && ((blockIndex%64)+i)<64){
+                                        MapBlock previousBlock = layout.getBlocks()[blockIndex+j*64+i];
+                                        action[4+2*(j*width+i)] = previousBlock.getIndex();
+                                        action[4+2*(j*width+i)+1] = previousBlock.getFlags();
+                                        MapBlock newBlock = new MapBlock();
+                                        MapBlock modelBlock = copiedBlocks[j][i];
+                                        newBlock.setIndex(modelBlock.getIndex());
+                                        newBlock.setFlags(modelBlock.getFlags());
+                                        newBlock.setTiles(modelBlock.getTiles());
+                                        layout.getBlocks()[blockIndex+j*64+i] = newBlock; 
+                                    }else{
+                                        action[4+2*(j*width+i)] = -1;
+                                        action[4+2*(j*width+i)+1] = -1;
+                                    }
+                                }
+                            }
+                            actions.add(action);
+                            redraw = true;
                         }
                         break;
                     case MouseEvent.BUTTON2:
-                        selectedBlock0 = layout.getBlocks()[y*64+x];
-                        MapBlockLayout.selectedBlockIndex0 = selectedBlock0.getIndex();
-                        updateLeftSlot(selectedBlock0);
+                        lastMapX = x;
+                        lastMapY = y;
                         break;
                     case MouseEvent.BUTTON3:
                         setBlockValue(x, y, MapBlockLayout.selectedBlockIndex1);
@@ -517,11 +550,68 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         }
 
         this.repaint();
-        System.out.println("Blockset press "+e.getButton()+" "+x+" - "+y);
+        //System.out.println("Map press "+e.getButton()+" "+x+" - "+y);
     }
     @Override
     public void mouseReleased(MouseEvent e) {
-        
+        int x = e.getX() / (currentDisplaySize * 3*8);
+        int y = e.getY() / (currentDisplaySize * 3*8);
+        switch (e.getButton()) {
+            case MouseEvent.BUTTON2:
+                if(currentMode==MODE_BLOCK){                
+                    if(x==lastMapX && y==lastMapY){
+                        selectedBlock0 = layout.getBlocks()[y*64+x];
+                        MapBlockLayout.selectedBlockIndex0 = selectedBlock0.getIndex();
+                        updateLeftSlot(selectedBlock0);
+                    }else{
+                        /* Mass copy */
+                        int xStart;
+                        int xEnd;
+                        int yStart;
+                        int yEnd;
+                        if(x>lastMapX){
+                            xStart = lastMapX;
+                            xEnd = x;
+                        }else{
+                            xStart = x;
+                            xEnd = lastMapX;
+                        }
+                        if(y>lastMapY){
+                            yStart = lastMapY;
+                            yEnd = y;
+                        }else{
+                            yStart = y;
+                            yEnd = lastMapY;
+                        }
+                        int width = xEnd - xStart + 1;
+                        int height = yEnd - yStart + 1;
+                        copiedBlocks = new MapBlock[height][width];
+                        for(int j=0;j<height;j++){
+                            for(int i=0;i<width;i++){
+                                copiedBlocks[j][i] = layout.getBlocks()[(yStart+j)*64+xStart+i];
+                            }
+                        }
+
+                        MapBlockLayout.selectedBlockIndex0 = -1;
+
+                        BufferedImage img = new BufferedImage(3*8,3*8,BufferedImage.TYPE_INT_ARGB);
+                        Graphics2D g2 = (Graphics2D) img.getGraphics();
+                        g2.setColor(Color.BLACK);
+                        for(int i=0;3+i*3<3*8;i++){
+                            g2.drawLine(3+i*3, 0, 3+i*3, 3*8-1);
+                            g2.drawLine(0, 3+i*3, 3*8-1, 3+i*3);
+                        }
+                        leftSlot.setBlockImage(img);
+                        leftSlot.revalidate();
+                        leftSlot.repaint(); 
+
+                    }
+                }
+
+                break;
+            default:
+                break;
+        }         
     }
     
     @Override
@@ -534,13 +624,13 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }
     
     private void updateLeftSlot(MapBlock block){
-        Graphics g = leftSlot.getGraphics();
-        g.drawImage(block.getImage(),0,0,null);
-        g.drawImage(block.getExplorationFlagImage(),0,0,null);
+        BufferedImage img = new BufferedImage(3*8,3*8,BufferedImage.TYPE_INT_ARGB);
+        Graphics g = img.getGraphics();
+        g.drawImage(block.getImage(), 0, 0, null);
+        g.drawImage(block.getExplorationFlagImage(), 0, 0, null);
+        leftSlot.setBlockImage(img);
         leftSlot.revalidate();
         leftSlot.repaint(); 
-        parentLeft.validate();
-        parentLeft.repaint();
     }
     
     public void setBlockValue(int x, int y, int value){
@@ -579,21 +669,50 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     public void revertLastAction(){
         if(actions.size()>0){
             int[] action = actions.get(actions.size()-1);
-            if(action[0]==ACTION_CHANGE_BLOCK_VALUE){
-                MapBlock block = layout.getBlocks()[action[1]];
-                block.setIndex(action[2]);
-                block.setImage(null);
-                block.setTiles(blockset[block.getIndex()].getTiles());
-                actions.remove(actions.size()-1);
-                redraw = true;
-                this.repaint();
-            }else if(action[0]==ACTION_CHANGE_BLOCK_FLAGS){
-                MapBlock block = layout.getBlocks()[action[1]];
-                block.setFlags(action[2]);
-                block.setExplorationFlagImage(null);
-                actions.remove(actions.size()-1);
-                redraw = true;
-                this.repaint();
+            switch (action[0]) {
+                case ACTION_CHANGE_BLOCK_VALUE:
+                    {
+                        MapBlock block = layout.getBlocks()[action[1]];
+                        block.setIndex(action[2]);
+                        block.setImage(null);
+                        block.setTiles(blockset[block.getIndex()].getTiles());
+                        actions.remove(actions.size()-1);
+                        redraw = true;
+                        this.repaint();
+                        break;
+                    }
+                case ACTION_CHANGE_BLOCK_FLAGS:
+                    {
+                        MapBlock block = layout.getBlocks()[action[1]];
+                        block.setFlags(action[2]);               
+                        block.setExplorationFlagImage(null);
+                        actions.remove(actions.size()-1);
+                        redraw = true;
+                        this.repaint();
+                        break;
+                    }
+                case ACTION_MASS_COPY:
+                    int blockIndex = action[1];
+                    int width = action[2];
+                    int height = action[3];
+                    for(int j=0;j<height;j++){
+                        for(int i=0;i<width;i++){
+                            int value = action[4+2*(j*width+i)];
+                            int flags = action[4+2*(j*width+i)+1];
+                            if(value != -1 && flags != -1){
+                                MapBlock block = new MapBlock();
+                                block.setIndex(value);
+                                block.setFlags(flags);
+                                block.setTiles(blockset[block.getIndex()].getTiles());
+                                layout.getBlocks()[blockIndex+j*64+i] = block;
+                            }
+                        }
+                    }   actions.remove(actions.size()-1);
+                    redraw = true;
+                    this.repaint();
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -664,31 +783,13 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         this.currentMode = currentMode;
     }
 
-    public JPanel getLeftSlot() {
+    public BlockSlotPanel getLeftSlot() {
         return leftSlot;
     }
 
-    public void setLeftSlot(JPanel leftSlot) {
+    public void setLeftSlot(BlockSlotPanel leftSlot) {
         this.leftSlot = leftSlot;
     }
-
-    public JPanel getRightSlot() {
-        return rightSlot;
-    }
-
-    public void setRightSlot(JPanel rightSlot) {
-        this.rightSlot = rightSlot;
-    }
-
-    public JPanel getParentLeft() {
-        return parentLeft;
-    }
-
-    public void setParentLeft(JPanel parentLeft) {
-        this.parentLeft = parentLeft;
-    }
-    
-    
     
     
 }
