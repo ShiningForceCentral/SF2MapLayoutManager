@@ -88,7 +88,7 @@ public class DisassemblyManager {
             for(File f : pFiles){
                 if(f.getName().startsWith(pPattern) && f.getName().endsWith(".bin")){
                     paletteFilenames.add(f.getName());
-                    System.out.println("Adding : "+f.getName());
+                    //System.out.println("Adding : "+f.getName());
                 }
             }
             if(paletteFilenames.isEmpty()){
@@ -111,7 +111,7 @@ public class DisassemblyManager {
             for(File f : tFiles){
                 if(f.getName().startsWith(tPattern) && f.getName().endsWith(".bin")){
                     tilesetFilenames.add(f.getName());
-                    System.out.println("Adding : "+f.getName());
+                    //System.out.println("Adding : "+f.getName());
                 }
             }
             if(tilesetFilenames.isEmpty()){

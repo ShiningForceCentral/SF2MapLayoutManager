@@ -487,11 +487,12 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                                     if((blockIndex+j*64+i)<4096 && ((blockIndex%64)+i)<64){
                                         MapBlock previousBlock = layout.getBlocks()[blockIndex+j*64+i];
                                         action[4+2*(j*width+i)] = previousBlock.getIndex();
-                                        action[4+2*(j*width+i)+1] = previousBlock.getFlags();
+                                        int origFlags = previousBlock.getFlags();
+                                        action[4+2*(j*width+i)+1] = origFlags;
                                         MapBlock newBlock = new MapBlock();
                                         MapBlock modelBlock = copiedBlocks[j][i];
                                         newBlock.setIndex(modelBlock.getIndex());
-                                        newBlock.setFlags(modelBlock.getFlags());
+                                        newBlock.setFlags((0xC000 & modelBlock.getFlags()) + (0x3C00 & origFlags));
                                         newBlock.setTiles(modelBlock.getTiles());
                                         layout.getBlocks()[blockIndex+j*64+i] = newBlock; 
                                     }else{

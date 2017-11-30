@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -537,7 +539,7 @@ public class MainEditor extends javax.swing.JFrame {
             }
         });
 
-        jTextField10.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset000.bin");
+        jTextField10.setText("..\\graphics\\maps\\maptilesets\\maptileset000.bin");
         jTextField10.setEnabled(false);
         jTextField10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -549,7 +551,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel13.setText("Palette :");
 
-        jTextField12.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\mappalettes\\mappalette00.bin");
+        jTextField12.setText("..\\graphics\\maps\\mappalettes\\mappalette00.bin");
         jTextField12.setEnabled(false);
         jTextField12.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -567,7 +569,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel14.setText("Tileset 2 :");
 
-        jTextField13.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset037.bin");
+        jTextField13.setText("..\\graphics\\maps\\maptilesets\\maptileset037.bin");
         jTextField13.setEnabled(false);
         jTextField13.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -585,7 +587,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel17.setText("Tileset 3 :");
 
-        jTextField16.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset043.bin");
+        jTextField16.setText("..\\graphics\\maps\\maptilesets\\maptileset043.bin");
         jTextField16.setEnabled(false);
         jTextField16.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -603,7 +605,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel18.setText("Tileset 4 :");
 
-        jTextField17.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset053.bin");
+        jTextField17.setText("..\\graphics\\maps\\maptilesets\\maptileset053.bin");
         jTextField17.setEnabled(false);
         jTextField17.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -621,7 +623,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel19.setText("Tileset 5 :");
 
-        jTextField18.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset066.bin");
+        jTextField18.setText("..\\graphics\\maps\\maptilesets\\maptileset066.bin");
         jTextField18.setEnabled(false);
         jTextField18.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -679,7 +681,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel23.setText("Palettes path :");
 
-        jTextField21.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\mappalettes\\mappalette");
+        jTextField21.setText("..\\graphics\\maps\\mappalettes\\mappalette");
         jTextField21.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField21ActionPerformed(evt);
@@ -695,7 +697,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel24.setText("Tilesets path :");
 
-        jTextField22.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\graphics\\maps\\maptilesets\\maptileset");
+        jTextField22.setText("..\\graphics\\maps\\maptilesets\\maptileset");
         jTextField22.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField22ActionPerformed(evt);
@@ -977,7 +979,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel26.setText("Base dir :");
 
-        jTextField24.setText("D:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\entries\\map03\\");
+        jTextField24.setText(".\\entries\\map03\\");
             jTextField24.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     jTextField24ActionPerformed(evt);
@@ -1142,18 +1144,46 @@ public class MainEditor extends javax.swing.JFrame {
 
     private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
         
+        String toolDir = System.getProperty("user.dir");
+        Path toolPath = Paths.get(toolDir);
+        
         String mapPath = jTextField24.getText();
         if(!mapPath.endsWith("\\")){
             mapPath = mapPath+"\\";
         }
-        String tilesetsPath = mapPath + jTextField23.getText();
-        String blocksetPath = mapPath + jTextField19.getText();
-        String layoutPath = mapPath + jTextField20.getText();
+        //Path basePath = Paths.get(mapPath).toAbsolutePath();
+        System.out.println(toolPath.toString());
+        Path basePath = toolPath.resolve(Paths.get(mapPath)).normalize();
+        System.out.println(basePath.toString());
+        Path tPath = Paths.get(jTextField23.getText());
+        Path tilesetsPath;
+        if(!tPath.isAbsolute()){
+           tilesetsPath = basePath.resolve(tPath).normalize();
+        }else{
+            tilesetsPath = tPath;
+        }
+        System.out.println(tilesetsPath.toString());
+        Path bPath = Paths.get(jTextField19.getText());
+        Path blocksetPath;
+        if(!bPath.isAbsolute()){
+           blocksetPath = basePath.resolve(bPath).normalize();
+        }else{
+            blocksetPath = bPath;
+        }
+        System.out.println(blocksetPath.toString());
+        Path lPath = Paths.get(jTextField20.getText());
+        Path layoutPath;
+        if(!lPath.isAbsolute()){
+           layoutPath = basePath.resolve(lPath).normalize();
+        }else{
+            layoutPath = lPath;
+        }        
+        System.out.println(layoutPath.toString());
         
         if(jRadioButton5.isSelected()){
-            maplayoutManager.importDisassembly(jTextField21.getText(),jTextField22.getText(),tilesetsPath,blocksetPath,layoutPath);
+            maplayoutManager.importDisassembly(jTextField21.getText(),jTextField22.getText(),tilesetsPath.toString(),blocksetPath.toString(),layoutPath.toString());
         }else {
-            maplayoutManager.importDisassembly(jTextField12.getText(),jTextField10.getText(),jTextField13.getText(), jTextField16.getText(),jTextField17.getText(),jTextField18.getText(),blocksetPath,layoutPath);
+            maplayoutManager.importDisassembly(jTextField12.getText(),jTextField10.getText(),jTextField13.getText(), jTextField16.getText(),jTextField17.getText(),jTextField18.getText(),blocksetPath.toString(),layoutPath.toString());
         }
         jPanel6.removeAll();       
         jPanel6.setLayout(new GridLayout(1,1));
@@ -1291,6 +1321,10 @@ public class MainEditor extends javax.swing.JFrame {
         int returnVal = jFileChooser1.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = jFileChooser1.getSelectedFile();
+            /*Path basePath = Paths.get(jTextField24.getText()).toAbsolutePath();
+            Path filePath = Paths.get(file.getAbsolutePath());
+            Path relativePath = basePath.relativize(filePath);
+            jTextField19.setText(relativePath.toString());*/
             jTextField19.setText(file.getAbsolutePath());
         }
     }//GEN-LAST:event_jButton25ActionPerformed
@@ -1303,6 +1337,10 @@ public class MainEditor extends javax.swing.JFrame {
         int returnVal = jFileChooser1.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = jFileChooser1.getSelectedFile();
+            /*Path basePath = Paths.get(jTextField24.getText()).toAbsolutePath();
+            Path filePath = Paths.get(file.getAbsolutePath());
+            Path relativePath = basePath.relativize(filePath);
+            jTextField20.setText(relativePath.toString());*/
             jTextField20.setText(file.getAbsolutePath());
         }
     }//GEN-LAST:event_jButton26ActionPerformed
@@ -1375,6 +1413,10 @@ public class MainEditor extends javax.swing.JFrame {
         int returnVal = jFileChooser1.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = jFileChooser1.getSelectedFile();
+            /*Path basePath = Paths.get(jTextField24.getText()).toAbsolutePath();
+            Path filePath = Paths.get(file.getAbsolutePath());
+            Path relativePath = basePath.relativize(filePath);
+            jTextField23.setText(relativePath.toString());*/
             jTextField23.setText(file.getAbsolutePath());
         }
     }//GEN-LAST:event_jButton30ActionPerformed
