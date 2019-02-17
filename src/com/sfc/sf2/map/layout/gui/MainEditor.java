@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.ConsoleHandler;
@@ -36,16 +37,20 @@ public class MainEditor extends javax.swing.JFrame {
      * Creates new form NewApplication
      */
     public MainEditor() {
-        initComponents();
-        initConsole(jTextArea1);
-        System.setProperty("java.util.logging.SimpleFormatter.format", 
-            "%2$s - %5$s%6$s%n");        
-        initLogger("com.sfc.sf2.graphics", Level.WARNING);        
-        File workingDirectory = new File(MainEditor.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-        System.setProperty("user.dir", workingDirectory.getParent());
-        jFileChooser1.setCurrentDirectory(workingDirectory);
-        jFileChooser2.setCurrentDirectory(workingDirectory); 
-        jTextArea2.setCaretPosition(0);
+        try {
+            initComponents();
+            initConsole(jTextArea1);
+            System.setProperty("java.util.logging.SimpleFormatter.format",
+                    "%2$s - %5$s%6$s%n");
+            initLogger("com.sfc.sf2.graphics", Level.WARNING);
+            File workingDirectory = new File(MainEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+            System.setProperty("user.dir", workingDirectory.toString());
+            jFileChooser1.setCurrentDirectory(workingDirectory);
+            jFileChooser2.setCurrentDirectory(workingDirectory);
+            jTextArea2.setCaretPosition(0);
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(MainEditor.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     private void initLogger(String name, Level level){
@@ -1350,7 +1355,11 @@ public class MainEditor extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField15ActionPerformed
 
     private void jButton27ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton27ActionPerformed
-        // TODO add your handling code here:
+        int returnVal = jFileChooser1.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = jFileChooser1.getSelectedFile();
+            jTextField15.setText(file.getAbsolutePath());
+        }
     }//GEN-LAST:event_jButton27ActionPerformed
 
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed

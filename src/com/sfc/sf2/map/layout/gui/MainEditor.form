@@ -683,10 +683,8 @@
                               <Layout>
                                 <DimensionLayout dim="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="103" alignment="1" groupAlignment="1" attributes="0">
-                                          <Component id="jPanel5" alignment="0" pref="249" max="32767" attributes="0"/>
-                                          <Component id="jPanel3" alignment="0" pref="249" max="32767" attributes="0"/>
-                                      </Group>
+                                      <Component id="jPanel5" alignment="0" pref="249" max="32767" attributes="0"/>
+                                      <Component id="jPanel3" alignment="0" pref="249" max="32767" attributes="0"/>
                                       <Group type="102" alignment="1" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
@@ -1441,7 +1439,7 @@
                     <Container class="javax.swing.JScrollPane" name="jScrollPane4">
                       <Properties>
                         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
-                          <Color id="Default Cursor"/>
+                          <Color id="Curseur par d&#xe9;faut"/>
                         </Property>
                       </Properties>
                       <AuxValues>
