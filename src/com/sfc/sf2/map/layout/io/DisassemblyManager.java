@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 import static com.sfc.sf2.graphics.compressed.StackGraphicsEncoder.bytesToHex;
 import java.io.File;
 import java.io.IOException;
+import java.util.Scanner;
 
 /**
  *
@@ -144,17 +145,45 @@ public class DisassemblyManager {
     private int[] parseTilesetsFile(String tilesetsFilePath){
         int[] indexes = new int[6];
         try {
-            Path tilesetspath = Paths.get(tilesetsFilePath);
-            if(!tilesetspath.toFile().exists()){
-                 System.err.println("ERROR - File not found : "+tilesetsFilePath);
+            if(tilesetsFilePath.endsWith(".asm")){
+                Path tilesetspath = Paths.get(tilesetsFilePath);
+                File file = tilesetspath.toFile();
+                if(!file.exists()){
+                     System.err.println("ERROR - File not found : "+tilesetsFilePath);
+                }else{                    
+                    Scanner scan = new Scanner(file);
+                    boolean inHeader = true;
+                    while(scan.hasNext()){
+                        String line = scan.nextLine();
+                        if(line.trim().startsWith("mapPalette")){
+                            indexes[0] = Integer.parseInt(line.trim().substring("mapPalette".length()).trim());
+                        }else if(line.trim().startsWith("mapTileset1")){
+                            indexes[1] = Integer.parseInt(line.trim().substring("mapTileset1".length()).trim());
+                        }else if(line.trim().startsWith("mapTileset2")){
+                            indexes[2] = Integer.parseInt(line.trim().substring("mapTileset2".length()).trim());
+                        }else if(line.trim().startsWith("mapTileset3")){
+                            indexes[3] = Integer.parseInt(line.trim().substring("mapTileset3".length()).trim());
+                        }else if(line.trim().startsWith("mapTileset4")){
+                            indexes[4] = Integer.parseInt(line.trim().substring("mapTileset4".length()).trim());
+                        }else if(line.trim().startsWith("mapTileset5")){
+                            indexes[5] = Integer.parseInt(line.trim().substring("mapTileset5".length()).trim());
+                        }
+                        
+                    }                      
+                }
             }else{
-                byte[] data = Files.readAllBytes(tilesetspath);
-                indexes[0] = (int)(data[0]);
-                indexes[1] = (int)(data[1]);
-                indexes[2] = (int)(data[2]);
-                indexes[3] = (int)(data[3]);
-                indexes[4] = (int)(data[4]);
-                indexes[5] = (int)(data[5]);                
+                Path tilesetspath = Paths.get(tilesetsFilePath);
+                if(!tilesetspath.toFile().exists()){
+                     System.err.println("ERROR - File not found : "+tilesetsFilePath);
+                }else{
+                    byte[] data = Files.readAllBytes(tilesetspath);
+                    indexes[0] = (int)(data[0]);
+                    indexes[1] = (int)(data[1]);
+                    indexes[2] = (int)(data[2]);
+                    indexes[3] = (int)(data[3]);
+                    indexes[4] = (int)(data[4]);
+                    indexes[5] = (int)(data[5]);                
+                }
             }        
         } catch (IOException ex) {
             Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
