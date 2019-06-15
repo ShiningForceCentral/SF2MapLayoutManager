@@ -111,11 +111,14 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         renderCounter++;
         System.out.println("Map render "+renderCounter);
         this.layout = layout;
+        if(pngExport){
+            redraw = true;
+        }
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
             int imageHeight = 64*3*8;
             Color[] palette = blocks[0].getTiles()[0].getPalette();
-            palette[0] = new Color(255, 255, 255, 0);
+            //palette[0] = new Color(255, 255, 255, 0);
             IndexColorModel icm = buildIndexColorModel(palette);
             currentImage = new BufferedImage(tilesPerRow*8, imageHeight , BufferedImage.TYPE_BYTE_INDEXED, icm);
             Graphics graphics = currentImage.getGraphics();            
@@ -198,8 +201,10 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             if(drawGrid){
                 graphics.drawImage(getGridImage(), 0, 0, null);
             }            
-            redraw = false;
-            currentImage = resize(currentImage);
+            if(!pngExport){
+                currentImage = resize(currentImage);
+                redraw = false;
+            }
         }
                   
         return currentImage;

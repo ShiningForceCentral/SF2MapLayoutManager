@@ -686,7 +686,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel23.setText("Palettes path :");
 
-        jTextField21.setText("..\\graphics\\maps\\mappalettes\\mappalette");
+        jTextField21.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\mappalettes\\mappalette");
         jTextField21.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField21ActionPerformed(evt);
@@ -702,7 +702,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel24.setText("Tilesets path :");
 
-        jTextField22.setText("..\\graphics\\maps\\maptilesets\\maptileset");
+        jTextField22.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset");
         jTextField22.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField22ActionPerformed(evt);
@@ -984,7 +984,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel26.setText("Base dir :");
 
-        jTextField24.setText(".\\entries\\map03\\");
+        jTextField24.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\.\\entries\\map03\\");
             jTextField24.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     jTextField24ActionPerformed(evt);

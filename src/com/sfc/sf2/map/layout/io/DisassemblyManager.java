@@ -72,6 +72,10 @@ public class DisassemblyManager {
     }      
     
     public MapLayout importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath){
+        return importDisassembly(palettesPath, tilesetsPath, tilesetsFilePath, blocksPath, layoutPath, null, 0, 0, 0 ,0);
+    }      
+    
+    public MapLayout importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animationTileset, int length, int animFrameStart, int animFrameLength, int animFrameDest){
         //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = null;
         String palettePath = "";
@@ -129,10 +133,23 @@ public class DisassemblyManager {
                     }
                 }               
                 
-            }              
+            }     
             
-            layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath);
+            if(animationTileset!=null){
+                String animationTilesetPath = null;
+                if(animationTileset > tilesetFilenames.size()){
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                } else if(animationTileset!=-1){
+                    animationTilesetPath = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
+                    System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+animationTileset+" : "+animationTilesetPath);
+                } else{
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Animation tileset "+animationTileset+" is declared empty.");
+                }
 
+                layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
+            }else{
+                layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath);
+            }
         }catch(Exception e){
              System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
              e.printStackTrace();
@@ -192,10 +209,14 @@ public class DisassemblyManager {
     }
     
     public MapLayout importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
+        return importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, layoutPath, null, 0, 0, 0);
+    }
+    
+    public MapLayout importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath, String animationTilesetPath, int animFrameStart, int animFrameLength, int animFrameDest){
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = new MapLayout();
         try{
-            blockset = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath);
+            blockset = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
 
             if(blockset!=null){
                 layout = parseLayoutData(blockset, layoutPath);
@@ -478,7 +499,7 @@ public class DisassemblyManager {
     private void saveBlockToLeftStackMap(int leftBlockIndex, MapBlock block){
         MapBlock[] currentStack = leftHistoryMap[leftBlockIndex];
         
-        if(!block.equals(currentStack[0])){
+        if(!block.equalsIgnoreTiles(currentStack[0])){
             MapBlock[] newStack = new MapBlock[4];
             leftHistoryMap[leftBlockIndex] = newStack;
             newStack[0] = block;
@@ -486,7 +507,7 @@ public class DisassemblyManager {
             int newStackCursor = 1;
             while(newStackCursor<4){
                 if(currentStack[currentStackCursor]!=null){
-                    if(!block.equals(currentStack[currentStackCursor])){
+                    if(!block.equalsIgnoreTiles(currentStack[currentStackCursor])){
                         newStack[newStackCursor] = currentStack[currentStackCursor];
                         currentStackCursor++;
                         newStackCursor++;
@@ -504,7 +525,7 @@ public class DisassemblyManager {
     private void saveBlockToUpperStackMap(int upperBlockIndex, MapBlock block){
         MapBlock[] currentStack = upperHistoryMap[upperBlockIndex];
         
-        if(!block.equals(currentStack[0])){
+        if(!block.equalsIgnoreTiles(currentStack[0])){
             MapBlock[] newStack = new MapBlock[4];
             upperHistoryMap[upperBlockIndex] = newStack;
             newStack[0] = block;
@@ -512,7 +533,7 @@ public class DisassemblyManager {
             int newStackCursor = 1;
             while(newStackCursor<4){
                 if(currentStack[currentStackCursor]!=null){
-                    if(!block.equals(currentStack[currentStackCursor])){
+                    if(!block.equalsIgnoreTiles(currentStack[currentStackCursor])){
                         newStack[newStackCursor] = currentStack[currentStackCursor];
                         currentStackCursor++;
                         newStackCursor++;
@@ -618,10 +639,10 @@ public class DisassemblyManager {
             
             /* Produce candidate commands */ 
             
-            if(block.equals(leftBlock)){
+            if(block.equalsIgnoreTiles(leftBlock)){
                 /* Produce leftCopyCandidate with length */
                 leftCopyLength = 1;
-                while(blockCursor+leftCopyLength<blocks.length && blocks[blockCursor+leftCopyLength].equals(blocks[blockCursor-1+leftCopyLength])){
+                while(blockCursor+leftCopyLength<blocks.length && blocks[blockCursor+leftCopyLength].equalsIgnoreTiles(blocks[blockCursor-1+leftCopyLength])){
                     leftCopyLength++;
                 }
                 int powerOfTwo = 0;
@@ -651,10 +672,10 @@ public class DisassemblyManager {
                 //System.out.println(" leftCopyCandidate="+leftCopyCandidate+" - "+leftCopyLength+" blocks");
             }
             
-            if(block.equals(upperBlock)){
+            if(block.equalsIgnoreTiles(upperBlock)){
                 /* Produce upperCopyCandidate with length */
                 upperCopyLength = 1;
-                while(blockCursor+upperCopyLength<blocks.length && blocks[blockCursor+upperCopyLength].equals(blocks[blockCursor-64+upperCopyLength])){
+                while(blockCursor+upperCopyLength<blocks.length && blocks[blockCursor+upperCopyLength].equalsIgnoreTiles(blocks[blockCursor-64+upperCopyLength])){
                     upperCopyLength++;
                 }
                 int powerOfTwo = 0;
@@ -699,7 +720,7 @@ public class DisassemblyManager {
                         }
                     }  
                     for(int i=0;i<=stackSize;i++){
-                        if(block.equals(stack[i])){
+                        if(block.equalsIgnoreTiles(stack[i])){
                             if(i<stackSize-1){
                                 commandSb.append("1");
                             }
@@ -729,7 +750,7 @@ public class DisassemblyManager {
                         }
                     }  
                     for(int i=0;i<=stackSize;i++){
-                        if(block.equals(stack[i])){
+                        if(block.equalsIgnoreTiles(stack[i])){
                             if(i<stackSize-1){
                                 commandSb.append("1");
                             }
@@ -898,7 +919,7 @@ public class DisassemblyManager {
             return index;
         }else{
             for(int i=0;i<4;i++){
-                if(block.equals(stack[i])){
+                if(block.equalsIgnoreTiles(stack[i])){
                     index = i;
                     break;
                 }
@@ -914,7 +935,7 @@ public class DisassemblyManager {
             return index;
         }else{
             for(int i=0;i<4;i++){
-                if(block.equals(stack[i])){
+                if(block.equalsIgnoreTiles(stack[i])){
                     index = i;
                     break;
                 }
