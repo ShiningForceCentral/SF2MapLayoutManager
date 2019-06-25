@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static com.sfc.sf2.graphics.compressed.StackGraphicsEncoder.bytesToHex;
+import com.sfc.sf2.map.layout.MapLayoutManager;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -158,6 +160,127 @@ public class DisassemblyManager {
         //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
         return layout;
     }  
+    
+       
+    
+    public MapLayout importDisassemblyFromEntryFiles(String incbinPath, String paletteEntriesPath, String tilesetEntriesPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animationTileset, int length, int animFrameStart, int animFrameLength, int animFrameDest){
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
+        MapLayout layout = null;
+        String palettePath = "";
+        String[] tilesetPaths = {"","","","",""};
+        try{
+            int[] indexes = parseTilesetsFile(tilesetsFilePath);
+            int paletteIndex = indexes[0];
+            
+            List<String> paletteFilenames = loadPaletteEntryFile(paletteEntriesPath);
+            if(paletteFilenames.isEmpty()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : no palette file imported. Wrong path or filename prefix ?");
+            } else if(paletteIndex > paletteFilenames.size()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : Index "+paletteIndex+" id superior to unmber of palette files found : "+paletteFilenames.size());
+            } else {
+                //palettePath = pDir + System.getProperty("file.separator") + paletteFilenames.get(paletteIndex);
+                palettePath = incbinPath + System.getProperty("file.separator") + paletteFilenames.get(paletteIndex);
+                System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected palette file : "+palettePath);
+            }
+
+
+            
+            List<String> tilesetFilenames = loadTilesetEntryFile(tilesetEntriesPath);
+            if(tilesetFilenames.isEmpty()){
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR : no tileset file imported. Wrong path or filename prefix ?");
+            } else {
+                for(int i=0;i<tilesetPaths.length;i++){
+                    if(indexes[i+1] > tilesetFilenames.size()){
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                    } else if(indexes[i+1]!=-1){
+                        //tilesetPaths[i] = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
+                        tilesetPaths[i] = incbinPath + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
+                        System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+(i+1)+" : "+tilesetPaths[i]);
+                    } else{
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Tileset "+(i+1)+" is declared empty.");
+                    }
+                }               
+                
+            }     
+            
+            if(animationTileset!=null){
+                String animationTilesetPath = null;
+                if(animationTileset > tilesetFilenames.size()){
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                } else if(animationTileset!=-1){
+                    //animationTilesetPath = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
+                    animationTilesetPath = incbinPath + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
+                    System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+animationTileset+" : "+animationTilesetPath);
+                } else{
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Animation tileset "+animationTileset+" is declared empty.");
+                }
+
+                layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
+            }else{
+                layout = importDisassembly(palettePath, tilesetPaths[0], tilesetPaths[1], tilesetPaths[2], tilesetPaths[3], tilesetPaths[4], blocksPath, layoutPath);
+            }
+        }catch(Exception e){
+             System.err.println("com.sfc.sf2.maplayout.io.PngManager.importPng() - Error while parsing graphics data : "+e);
+             e.printStackTrace();
+        }         
+                
+        //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Disassembly imported.");
+        return layout;
+    }  
+    
+    
+    public List<String> loadPaletteEntryFile(String filePath){
+        List<String> filepaths = new ArrayList();
+        try {
+            File entryFile = new File(filePath);
+            Scanner scan = new Scanner(entryFile);
+            while(scan.hasNext()){
+                String line = scan.nextLine();
+                if(line.contains("dc.l")){
+                    String pointer = line.substring(line.indexOf("dc.l")+5).trim();
+                    String filepath = null;
+                    Scanner filescan = new Scanner(entryFile);
+                    while(filescan.hasNext()){
+                        String pathline = filescan.nextLine();
+                        if(pathline.startsWith(pointer)){
+                            filepath = pathline.substring(pathline.indexOf("\"")+1, pathline.lastIndexOf("\""));
+                        }
+                    }
+                    filepaths.add(filepath);
+                }
+            }      
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return filepaths;
+    }
+    
+    public List<String> loadTilesetEntryFile(String filePath){
+        List<String> filepaths = new ArrayList();
+        try {
+            File entryFile = new File(filePath);
+            Scanner scan = new Scanner(entryFile);
+            while(scan.hasNext()){
+                String line = scan.nextLine();
+                if(line.contains("dc.l")){
+                    String pointer = line.substring(line.indexOf("dc.l")+5).trim();
+                    String filepath = null;
+                    Scanner filescan = new Scanner(entryFile);
+                    while(filescan.hasNext()){
+                        String pathline = filescan.nextLine();
+                        if(pathline.startsWith(pointer)){
+                            filepath = pathline.substring(pathline.indexOf("\"")+1, pathline.lastIndexOf("\""));
+                        }
+                    }
+                    filepaths.add(filepath);
+                }
+            }      
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return filepaths;
+    }
+    
     
     private int[] parseTilesetsFile(String tilesetsFilePath){
         int[] indexes = new int[6];
@@ -993,8 +1116,6 @@ public class DisassemblyManager {
     public void setTileset(Tile[] tileset) {
         this.tileset = tileset;
     }
-    
-    
     
     
 }
