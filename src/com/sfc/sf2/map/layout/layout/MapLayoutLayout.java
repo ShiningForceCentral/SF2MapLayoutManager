@@ -26,6 +26,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,9 +129,12 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                     BufferedImage blockImage = block.getImage();
                     BufferedImage explorationFlagImage = block.getExplorationFlagImage();
                     BufferedImage interactionFlagImage = block.getInteractionFlagImage();
-                    if(blockImage==null){
+                    if(pngExport||blockImage==null){
                         blockImage = new BufferedImage(3*8, 3*8 , BufferedImage.TYPE_BYTE_INDEXED, icm);
-                        Graphics blockGraphics = blockImage.getGraphics();                    
+                        Graphics blockGraphics = blockImage.getGraphics();       
+                        if(y==0&&x==13){
+                            System.out.println("break");
+                        }
                         blockGraphics.drawImage(block.getTiles()[0].getImage(), 0*8, 0*8, null);
                         blockGraphics.drawImage(block.getTiles()[1].getImage(), 1*8, 0*8, null);
                         blockGraphics.drawImage(block.getTiles()[2].getImage(), 2*8, 0*8, null);
@@ -392,21 +396,17 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }    
     
     private IndexColorModel buildIndexColorModel(Color[] colors){
-        byte[] reds = new byte[16];
-        byte[] greens = new byte[16];
-        byte[] blues = new byte[16];
-        byte[] alphas = new byte[16];
-        reds[0] = (byte)0xFF;
-        greens[0] = (byte)0xFF;
-        blues[0] = (byte)0xFF;
-        alphas[0] = 0;
-        for(int i=1;i<16;i++){
-            reds[i] = (byte)colors[i].getRed();
-            greens[i] = (byte)colors[i].getGreen();
-            blues[i] = (byte)colors[i].getBlue();
-            alphas[i] = (byte)0xFF;
+        int[] plt = new int[16];
+        //plt[0] = 0x00FFFFFF;
+        //for(int i=1;i<16;i++){
+        for(int i=0;i<16;i++){
+            int alpha = (i==0)?0:0xFF000000;
+            plt[i] = alpha 
+                    + ((colors[i].getRed() << 16) & 0x00FF0000) 
+                    + ((colors[i].getGreen() << 8) & 0x0000FF00) 
+                    + ((colors[i].getBlue() << 0) & 0x000000FF);
         }
-        IndexColorModel icm = new IndexColorModel(4,16,reds,greens,blues,alphas);
+        IndexColorModel icm = new IndexColorModel(4, 16, plt, 0, false, 0, DataBuffer.TYPE_BYTE);  
         return icm;
     }    
     
@@ -416,7 +416,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }
     
     private BufferedImage resize(BufferedImage image){
-        BufferedImage newImage = new BufferedImage(image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage newImage = new BufferedImage(image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel)image.getColorModel());
         Graphics g = newImage.getGraphics();
         g.drawImage(image, 0, 0, image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, null);
         g.dispose();

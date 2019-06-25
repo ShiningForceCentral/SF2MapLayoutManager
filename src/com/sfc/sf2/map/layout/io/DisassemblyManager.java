@@ -49,7 +49,7 @@ public class DisassemblyManager {
     MapBlock[][] upperHistoryMap = null;    
     
     Color[] palette = null;
-    Tile[] tileset = new Tile[128*5];
+    Tile[] tileset = null;
     
     public MapLayout importDisassembly(String palettesPath, String tilesetsPath, String mapPath){
         //System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
@@ -574,6 +574,9 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Exporting disassembly ...");
         try { 
             byte[] layoutBytes = produceLayoutBytes(layout);
+            if(tileset!=null){
+                blockManager.setTileset(tileset);
+            }
             blockManager.exportDisassembly(blockset, blocksFilePath);
             Path layoutFilepath = Paths.get(layoutFilePath);
             Files.write(layoutFilepath,layoutBytes);
@@ -981,6 +984,14 @@ public class DisassemblyManager {
 
     public void setBlockset(MapBlock[] blockset) {
         this.blockset = blockset;
+    }
+
+    public Tile[] getTileset() {
+        return tileset;
+    }
+
+    public void setTileset(Tile[] tileset) {
+        this.tileset = tileset;
     }
     
     

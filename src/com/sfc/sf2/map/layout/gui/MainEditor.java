@@ -544,7 +544,7 @@ public class MainEditor extends javax.swing.JFrame {
             }
         });
 
-        jTextField10.setText("..\\graphics\\maps\\maptilesets\\maptileset000.bin");
+        jTextField10.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset000-new.bin");
         jTextField10.setEnabled(false);
         jTextField10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -556,7 +556,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel13.setText("Palette :");
 
-        jTextField12.setText("..\\graphics\\maps\\mappalettes\\mappalette00.bin");
+        jTextField12.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\mappalettes\\mappalette00-new.bin");
         jTextField12.setEnabled(false);
         jTextField12.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -574,7 +574,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel14.setText("Tileset 2 :");
 
-        jTextField13.setText("..\\graphics\\maps\\maptilesets\\maptileset037.bin");
+        jTextField13.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset037-new.bin");
         jTextField13.setEnabled(false);
         jTextField13.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -592,7 +592,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel17.setText("Tileset 3 :");
 
-        jTextField16.setText("..\\graphics\\maps\\maptilesets\\maptileset043.bin");
+        jTextField16.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset043-new.bin");
         jTextField16.setEnabled(false);
         jTextField16.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -610,7 +610,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel18.setText("Tileset 4 :");
 
-        jTextField17.setText("..\\graphics\\maps\\maptilesets\\maptileset053.bin");
+        jTextField17.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset053-new.bin");
         jTextField17.setEnabled(false);
         jTextField17.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -628,7 +628,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel19.setText("Tileset 5 :");
 
-        jTextField18.setText("..\\graphics\\maps\\maptilesets\\maptileset066.bin");
+        jTextField18.setText("C:\\SEGADEV\\GITHUB\\SF2DISASM\\disasm\\data\\maps\\..\\graphics\\maps\\maptilesets\\maptileset066-new.bin");
         jTextField18.setEnabled(false);
         jTextField18.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -646,7 +646,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel20.setText("Blockset :");
 
-        jTextField19.setText("0-blocks.bin");
+        jTextField19.setText("0-blocks-new.bin");
         jTextField19.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField19ActionPerformed(evt);
@@ -662,7 +662,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel21.setText("Layout :");
 
-        jTextField20.setText("1-layout.bin");
+        jTextField20.setText("1-layout-new.bin");
         jTextField20.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField20ActionPerformed(evt);
@@ -1046,7 +1046,7 @@ public class MainEditor extends javax.swing.JFrame {
             jPanel15.setLayout(jPanel15Layout);
             jPanel15Layout.setHorizontalGroup(
                 jPanel15Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jSplitPane2)
+                .addComponent(jSplitPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 998, Short.MAX_VALUE)
             );
             jPanel15Layout.setVerticalGroup(
                 jPanel15Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1114,7 +1114,7 @@ public class MainEditor extends javax.swing.JFrame {
             jPanel13.setLayout(jPanel13Layout);
             jPanel13Layout.setHorizontalGroup(
                 jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jSplitPane1)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1000, Short.MAX_VALUE)
             );
             jPanel13Layout.setVerticalGroup(
                 jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
