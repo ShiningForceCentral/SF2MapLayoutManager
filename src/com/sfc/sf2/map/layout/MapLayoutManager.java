@@ -6,20 +6,12 @@
 package com.sfc.sf2.map.layout;
 
 import com.sfc.sf2.graphics.GraphicsManager;
-import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.block.MapBlock;
-import com.sfc.sf2.map.block.MapBlockManager;
 import com.sfc.sf2.map.layout.io.DisassemblyManager;
 import com.sfc.sf2.map.layout.io.PngManager;
 import com.sfc.sf2.palette.PaletteManager;
-import java.awt.Color;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.IOException;
 
 /**
  *
@@ -42,11 +34,13 @@ public class MapLayoutManager {
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
     }
     
-    public void importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath){
+    public void importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath)
+        throws DisassemblyException {
         importDisassembly(palettesPath, tilesetsPath, tilesetsFilePath, blocksPath, layoutPath, null, 0, 0, 0, 0);
     }
     
-    public void importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animTileset, int animLength, int animFrameStart, int animFrameLength, int animFrameDest){
+    public void importDisassembly(String palettesPath, String tilesetsPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animTileset, int animLength, int animFrameStart, int animFrameLength, int animFrameDest)
+        throws DisassemblyException {
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
         disassemblyManager = new DisassemblyManager();
         layout = disassemblyManager.importDisassembly(palettesPath, tilesetsPath, tilesetsFilePath, blocksPath, layoutPath, animTileset, animLength, animFrameStart, animFrameLength, animFrameDest);
@@ -54,16 +48,22 @@ public class MapLayoutManager {
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
     }
     
-    public void importDisassemblyFromEntryFiles(String incbinPath, String paletteEntriesPath, String tilesetEntriesPath, String tilesetsFilePath, String blocksPath, String layoutPath){
+    public void importDisassemblyFromEntryFiles(String incbinPath, String paletteEntriesPath, String tilesetEntriesPath, String tilesetsFilePath, String blocksPath, String layoutPath)
+        throws DisassemblyException {
+        
         importDisassemblyFromEntryFiles(incbinPath, paletteEntriesPath, tilesetEntriesPath, tilesetsFilePath, blocksPath, layoutPath, null, 0, 0, 0, 0);
+    
     }
     
-    public void importDisassemblyFromEntryFiles(String incbinPath, String paletteEntriesPath, String tilesetEntriesPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animTileset, int animLength, int animFrameStart, int animFrameLength, int animFrameDest){
-        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Importing disassembly ...");
+    public void importDisassemblyFromEntryFiles(String incbinPath, String paletteEntriesPath, String tilesetEntriesPath, String tilesetsFilePath, String blocksPath, String layoutPath, Integer animTileset, int animLength, int animFrameStart, int animFrameLength, int animFrameDest) 
+        throws DisassemblyException {
+        
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassemblyFromEntryFiles() - Importing disassembly ...");
         disassemblyManager = new DisassemblyManager();
         layout = disassemblyManager.importDisassemblyFromEntryFiles(incbinPath, paletteEntriesPath, tilesetEntriesPath, tilesetsFilePath, blocksPath, layoutPath, animTileset, animLength, animFrameStart, animFrameLength, animFrameDest);
         blockset = disassemblyManager.getBlockset();
-        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly imported.");
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassemblyFromEntryFiles() - Disassembly imported.");
+        
     }
     
     public void exportDisassembly(String blocksPath, String layoutPath){

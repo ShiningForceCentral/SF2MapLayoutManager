@@ -7,11 +7,11 @@ package com.sfc.sf2.map.layout.gui;
 
 import com.sfc.sf2.map.block.gui.BlockSlotPanel;
 import com.sfc.sf2.map.block.layout.MapBlockLayout;
+import com.sfc.sf2.map.layout.DisassemblyException;
 import com.sfc.sf2.map.layout.MapLayoutManager;
 import com.sfc.sf2.map.layout.layout.MapLayoutLayout;
 import java.awt.GridLayout;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.TrayIcon;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
@@ -21,6 +21,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
 /**
@@ -1184,11 +1185,17 @@ public class MainEditor extends javax.swing.JFrame {
         }        
         System.out.println(layoutPath.toString());
         
-        if(jRadioButton5.isSelected()){
-            maplayoutManager.importDisassembly(jTextField21.getText(),jTextField22.getText(),tilesetsPath.toString(),blocksetPath.toString(),layoutPath.toString());
-        }else {
-            maplayoutManager.importDisassembly(jTextField12.getText(),jTextField10.getText(),jTextField13.getText(), jTextField16.getText(),jTextField17.getText(),jTextField18.getText(),blocksetPath.toString(),layoutPath.toString());
+        try {
+            if(jRadioButton5.isSelected()){
+                maplayoutManager.importDisassembly(jTextField21.getText(),jTextField22.getText(),tilesetsPath.toString(),blocksetPath.toString(),layoutPath.toString());
+            } else {
+                maplayoutManager.importDisassembly(jTextField12.getText(),jTextField10.getText(),jTextField13.getText(), jTextField16.getText(),jTextField17.getText(),jTextField18.getText(),blocksetPath.toString(),layoutPath.toString());
+            }
+        } catch (DisassemblyException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
         jPanel6.removeAll();       
         jPanel6.setLayout(new GridLayout(1,1));
         mapblockLayout = new MapBlockLayout();
