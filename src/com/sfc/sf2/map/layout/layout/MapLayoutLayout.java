@@ -5,22 +5,15 @@
  */
 package com.sfc.sf2.map.layout.layout;
 
-import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.block.MapBlock;
 import com.sfc.sf2.map.block.gui.BlockSlotPanel;
 import com.sfc.sf2.map.block.layout.MapBlockLayout;
 import com.sfc.sf2.map.layout.MapLayout;
 import java.awt.BasicStroke;
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -31,7 +24,6 @@ import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 
 /**
  *
@@ -600,14 +592,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
 
                         MapBlockLayout.selectedBlockIndex0 = -1;
 
-                        BufferedImage img = new BufferedImage(3*8,3*8,BufferedImage.TYPE_INT_ARGB);
-                        Graphics2D g2 = (Graphics2D) img.getGraphics();
-                        g2.setColor(Color.BLACK);
-                        for(int i=0;3+i*3<3*8;i++){
-                            g2.drawLine(3+i*3, 0, 3+i*3, 3*8-1);
-                            g2.drawLine(0, 3+i*3, 3*8-1, 3+i*3);
-                        }
-                        leftSlot.setBlockImage(img);
+                        leftSlot.setBlock(null);
                         leftSlot.revalidate();
                         leftSlot.repaint(); 
 
@@ -630,11 +615,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }
     
     private void updateLeftSlot(MapBlock block){
-        BufferedImage img = new BufferedImage(3*8,3*8,BufferedImage.TYPE_INT_ARGB);
-        Graphics g = img.getGraphics();
-        g.drawImage(block.getImage(), 0, 0, null);
-        g.drawImage(block.getExplorationFlagImage(), 0, 0, null);
-        leftSlot.setBlockImage(img);
+        leftSlot.setBlock(block);
         leftSlot.revalidate();
         leftSlot.repaint(); 
     }

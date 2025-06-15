@@ -1200,7 +1200,7 @@ public class MainEditor extends javax.swing.JFrame {
         jPanel6.removeAll();       
         jPanel6.setLayout(new GridLayout(1,1));
         mapblockLayout = new MapBlockLayout();
-        mapblockLayout.setTilesPerRow(((int)jSpinner1.getModel().getValue())*3);
+        mapblockLayout.setBlocksPerRow(((int)jSpinner1.getModel().getValue()));
         mapblockLayout.setCurrentDisplaySize(jComboBox2.getSelectedIndex()+1);
         mapblockLayout.setBlocks(maplayoutManager.getBlockset());
         jPanel6.add(mapblockLayout);
@@ -1403,7 +1403,7 @@ public class MainEditor extends javax.swing.JFrame {
 
     private void jSpinner1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinner1StateChanged
         if(mapblockLayout != null){
-            mapblockLayout.setTilesPerRow((int)jSpinner1.getModel().getValue()*3);
+            mapblockLayout.setBlocksPerRow((int)jSpinner1.getModel().getValue());
             jPanel6.revalidate();
             jPanel6.repaint();
         }

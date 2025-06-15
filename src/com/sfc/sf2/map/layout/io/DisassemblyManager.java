@@ -369,7 +369,7 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Importing disassembly ...");
         MapLayout layout = new MapLayout();
         try{
-            blockset = blockManager.importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
+            blockset = blockManager.importDisassembly(palettePath, new String[] { tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path }, blocksPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
 
             if(blockset!=null){
                 layout = parseLayoutData(blockset, layoutPath);
