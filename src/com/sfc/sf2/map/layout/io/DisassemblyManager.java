@@ -144,7 +144,7 @@ public class DisassemblyManager {
             } else {
                 for(int i=0;i<tilesetPaths.length;i++){
                     if(indexes[i+1] > tilesetFilenames.size()){
-                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to number of tileset files found : "+tilesetFilenames.size());
                     } else if(indexes[i+1]!=-1){
                         tilesetPaths[i] = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
                         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+(i+1)+" : "+tilesetPaths[i]);
@@ -158,7 +158,7 @@ public class DisassemblyManager {
             if(animationTileset!=null){
                 String animationTilesetPath = null;
                 if(animationTileset > tilesetFilenames.size()){
-                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to number of tileset files found : "+tilesetFilenames.size());
                 } else if(animationTileset!=-1){
                     animationTilesetPath = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
                     System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Selected tileset "+animationTileset+" : "+animationTilesetPath);
@@ -203,7 +203,7 @@ public class DisassemblyManager {
             if(paletteFilenames.isEmpty()){
                 System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassemblyFromEntryFiles() - ERROR : no palette file imported. Wrong path or filename prefix ?");
             } else if(paletteIndex > paletteFilenames.size()){
-                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassemblyFromEntryFiles() - ERROR : Index "+paletteIndex+" id superior to unmber of palette files found : "+paletteFilenames.size());
+                System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassemblyFromEntryFiles() - ERROR : Index "+paletteIndex+" id superior to number of palette files found : "+paletteFilenames.size());
             } else {
                 //palettePath = pDir + System.getProperty("file.separator") + paletteFilenames.get(paletteIndex);
                 palettePath = incbinPath + System.getProperty("file.separator") + paletteFilenames.get(paletteIndex);
@@ -220,7 +220,7 @@ public class DisassemblyManager {
             } else {
                 for(int i=0;i<tilesetPaths.length;i++){
                     if(indexes[i+1] > tilesetFilenames.size()){
-                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                        System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for tileset "+(i+1)+" : Index "+indexes[i+1]+" id superior to number of tileset files found : "+tilesetFilenames.size());
                     } else if(indexes[i+1]!=-1){
                         //tilesetPaths[i] = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
                         tilesetPaths[i] = incbinPath + System.getProperty("file.separator") + tilesetFilenames.get(indexes[i+1]);
@@ -235,7 +235,7 @@ public class DisassemblyManager {
             if(animationTileset!=null){
                 String animationTilesetPath = null;
                 if(animationTileset > tilesetFilenames.size()){
-                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to unmber of tileset files found : "+tilesetFilenames.size());
+                    System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - ERROR for animation tileset : Index "+animationTileset+" id superior to number of tileset files found : "+tilesetFilenames.size());
                 } else if(animationTileset!=-1){
                     //animationTilesetPath = tDirectory + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
                     animationTilesetPath = incbinPath + System.getProperty("file.separator") + tilesetFilenames.get(animationTileset);
@@ -416,6 +416,7 @@ public class DisassemblyManager {
                         blocksetCursor++;
                         block.setTiles(blockSet[blocksetCursor].getTiles());
                         block.setIndex(blockSet[blocksetCursor].getIndex());
+                        block.setIcm(blockSet[blocksetCursor].getIcm());
                         applyFlags(block);
                         blocks[blockCursor] = block; 
                         if(blockCursor>0){
@@ -452,6 +453,7 @@ public class DisassemblyManager {
                                 copy.setTiles(source.getTiles());
                                 copy.setIndex(source.getIndex());
                                 copy.setFlags(source.getFlags());
+                                copy.setIcm(source.getIcm());
                                 blocks[blockCursor] = copy;
                                 //System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
                                 blockCursor++;
@@ -538,6 +540,7 @@ public class DisassemblyManager {
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
                             block.setFlags(targetBlock.getFlags());
+                            block.setIcm(targetBlock.getIcm());
                             break;
                         
                         case COMMAND_UPPERMAP :
@@ -564,6 +567,7 @@ public class DisassemblyManager {
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
                             block.setFlags(targetBlock.getFlags());
+                            block.setIcm(targetBlock.getIcm());
                             break;
                             
                         case COMMAND_CUSTOMVALUE :
@@ -577,6 +581,7 @@ public class DisassemblyManager {
                             targetBlock = blockSet[value];
                             block.setTiles(targetBlock.getTiles());
                             block.setIndex(targetBlock.getIndex());
+                            block.setIcm(targetBlock.getIcm());
                             applyFlags(block);
                             break;
                     }

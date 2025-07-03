@@ -13,6 +13,9 @@ import com.sfc.sf2.map.block.MapBlock;
  */
 public class MapLayout {
     
+    public static final int BLOCK_WIDTH = 64;
+    public static final int BLOCK_HEIGHT = 64;
+    
     private int index;
     
     private MapBlock[] blocks; 
