@@ -110,10 +110,8 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
             int imageHeight = 64*3*8;
-            Color[] palette = blocks[0].getTiles()[0].getPalette();
-            //palette[0] = new Color(255, 255, 255, 0);
-            IndexColorModel icm = buildIndexColorModel(palette);
-            currentImage = new BufferedImage(tilesPerRow*8, imageHeight , BufferedImage.TYPE_BYTE_INDEXED, icm);
+            IndexColorModel icm = buildIndexColorModel(blocks[0].getTiles()[0].getPalette());
+            currentImage = new BufferedImage(tilesPerRow*8, imageHeight , BufferedImage.TYPE_INT_ARGB);
             Graphics graphics = currentImage.getGraphics();            
             for(int y=0;y<64;y++){
                 for(int x=0;x<64;x++){
@@ -122,21 +120,8 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                     BufferedImage explorationFlagImage = block.getExplorationFlagImage();
                     BufferedImage interactionFlagImage = block.getInteractionFlagImage();
                     if(pngExport||blockImage==null){
-                        blockImage = new BufferedImage(3*8, 3*8 , BufferedImage.TYPE_BYTE_INDEXED, icm);
-                        Graphics blockGraphics = blockImage.getGraphics();       
-                        if(y==0&&x==13){
-                            System.out.println("break");
-                        }
-                        blockGraphics.drawImage(block.getTiles()[0].getImage(), 0*8, 0*8, null);
-                        blockGraphics.drawImage(block.getTiles()[1].getImage(), 1*8, 0*8, null);
-                        blockGraphics.drawImage(block.getTiles()[2].getImage(), 2*8, 0*8, null);
-                        blockGraphics.drawImage(block.getTiles()[3].getImage(), 0*8, 1*8, null);
-                        blockGraphics.drawImage(block.getTiles()[4].getImage(), 1*8, 1*8, null);
-                        blockGraphics.drawImage(block.getTiles()[5].getImage(), 2*8, 1*8, null);
-                        blockGraphics.drawImage(block.getTiles()[6].getImage(), 0*8, 2*8, null);
-                        blockGraphics.drawImage(block.getTiles()[7].getImage(), 1*8, 2*8, null);
-                        blockGraphics.drawImage(block.getTiles()[8].getImage(), 2*8, 2*8, null);
-                        block.setImage(blockImage);
+                        block.updatePixels();
+                        blockImage = block.getIndexedColorImage();
                     }
                     graphics.drawImage(blockImage, x*3*8, y*3*8, null);
                     if(drawExplorationFlags || drawInteractionFlags){ 
@@ -387,18 +372,19 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         return rightUpstairsImage;
     }    
     
-    private IndexColorModel buildIndexColorModel(Color[] colors){
-        int[] plt = new int[16];
-        //plt[0] = 0x00FFFFFF;
-        //for(int i=1;i<16;i++){
+    private static IndexColorModel buildIndexColorModel(Color[] colors){
+        byte[] reds = new byte[16];
+        byte[] greens = new byte[16];
+        byte[] blues = new byte[16];
+        byte[] alphas = new byte[16];
         for(int i=0;i<16;i++){
-            int alpha = (i==0)?0:0xFF000000;
-            plt[i] = alpha 
-                    + ((colors[i].getRed() << 16) & 0x00FF0000) 
-                    + ((colors[i].getGreen() << 8) & 0x0000FF00) 
-                    + ((colors[i].getBlue() << 0) & 0x000000FF);
+            reds[i] = (byte)colors[i].getRed();
+            greens[i] = (byte)colors[i].getGreen();
+            blues[i] = (byte)colors[i].getBlue();
+            alphas[i] = (byte)0xFF;
         }
-        IndexColorModel icm = new IndexColorModel(4, 16, plt, 0, false, 0, DataBuffer.TYPE_BYTE);  
+        alphas[0] = 0;
+        IndexColorModel icm = new IndexColorModel(4,16,reds,greens,blues,alphas);       
         return icm;
     }    
     
@@ -408,7 +394,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }
     
     private BufferedImage resize(BufferedImage image){
-        BufferedImage newImage = new BufferedImage(image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel)image.getColorModel());
+        BufferedImage newImage = new BufferedImage(image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, BufferedImage.TYPE_INT_ARGB);
         Graphics g = newImage.getGraphics();
         g.drawImage(image, 0, 0, image.getWidth()*currentDisplaySize, image.getHeight()*currentDisplaySize, null);
         g.dispose();
