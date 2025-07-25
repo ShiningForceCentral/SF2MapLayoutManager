@@ -110,9 +110,8 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
             int imageHeight = 64*3*8;
-            IndexColorModel icm = buildIndexColorModel(blocks[0].getTiles()[0].getPalette());
             currentImage = new BufferedImage(tilesPerRow*8, imageHeight , BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = currentImage.getGraphics();            
+            Graphics graphics = currentImage.getGraphics();
             for(int y=0;y<64;y++){
                 for(int x=0;x<64;x++){
                     MapBlock block = blocks[y*64+x];
