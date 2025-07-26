@@ -63,7 +63,6 @@ public class MapLayoutManager {
         layout = disassemblyManager.importDisassemblyFromEntryFiles(incbinPath, paletteEntriesPath, tilesetEntriesPath, tilesetsFilePath, blocksPath, layoutPath, animTileset, animLength, animFrameStart, animFrameLength, animFrameDest);
         blockset = disassemblyManager.getBlockset();
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassemblyFromEntryFiles() - Disassembly imported.");
-        
     }
     
     public void exportDisassembly(String blocksPath, String layoutPath){
