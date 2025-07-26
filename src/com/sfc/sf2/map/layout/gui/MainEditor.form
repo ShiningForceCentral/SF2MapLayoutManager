@@ -1122,7 +1122,7 @@
                                     </Component>
                                     <Component class="javax.swing.JTextField" name="jTextField21">
                                       <Properties>
-                                        <Property name="text" type="java.lang.String" value="..\u005cgraphics\u005cmaps\u005cmappalettes\u005cmappalette" containsInvalidXMLChars="true"/>
+                                        <Property name="text" type="java.lang.String" value="..\u005c..\u005c..\u005cgraphics\u005cmaps\u005cmappalettes\u005cmappalette" containsInvalidXMLChars="true"/>
                                       </Properties>
                                       <Events>
                                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jTextField21ActionPerformed"/>
@@ -1143,7 +1143,7 @@
                                     </Component>
                                     <Component class="javax.swing.JTextField" name="jTextField22">
                                       <Properties>
-                                        <Property name="text" type="java.lang.String" value="..\u005cgraphics\u005cmaps\u005cmaptilesets\u005cmaptileset" containsInvalidXMLChars="true"/>
+                                        <Property name="text" type="java.lang.String" value="..\u005c..\u005c..\u005cgraphics\u005cmaps\u005cmaptilesets\u005cmaptileset" containsInvalidXMLChars="true"/>
                                       </Properties>
                                       <Events>
                                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jTextField22ActionPerformed"/>

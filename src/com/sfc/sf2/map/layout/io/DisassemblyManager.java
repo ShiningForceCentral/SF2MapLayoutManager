@@ -130,7 +130,6 @@ public class DisassemblyManager {
         
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassemblyFromEntryFiles() - Importing disassembly ...");
         MapLayout layout = null;
-        String palettePath = "";
 
         try {
             String[] paths = importTilesetsFileFromEntries(incbinPath, paletteEntriesPath, tilesetEntriesPath, tilesetsFilePath);
@@ -172,12 +171,16 @@ public class DisassemblyManager {
             }
             
             for (int i = 1; i < paths.length; i++) {
-                Path tilesetFile = Path.of(tilesetsPath + String.format("%03d.bin",indexes[i]));
-                if (!tilesetFile.toFile().exists()) {
-                    throw new IOException("ERROR : Tileset file cannot be imported. Wrong path or filename prefix. File : " + tilesetFile.toString());
+                if (indexes[i] == 255) {
+                    paths[i] = "";
                 } else {
-                    paths[i] = tilesetFile.toString();
-                    System.out.println("Selected tileset " + (i-1) + " : " + paths[i]);
+                    Path tilesetFile = Path.of(tilesetsPath + String.format("%03d.bin",indexes[i]));
+                    if (!tilesetFile.toFile().exists()) {
+                        throw new IOException("ERROR : Tileset file cannot be imported. Wrong path or filename prefix. File : " + tilesetFile.toString());
+                    } else {
+                        paths[i] = tilesetFile.toString();
+                        System.out.println("Selected tileset " + (i-1) + " : " + paths[i]);
+                    }
                 }
             }
         } catch (FileNotFoundException ex) {

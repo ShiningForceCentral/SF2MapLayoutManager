@@ -688,7 +688,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel23.setText("Palettes path :");
 
-        jTextField21.setText("..\\graphics\\maps\\mappalettes\\mappalette");
+        jTextField21.setText("..\\..\\..\\graphics\\maps\\mappalettes\\mappalette");
         jTextField21.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField21ActionPerformed(evt);
@@ -704,7 +704,7 @@ public class MainEditor extends javax.swing.JFrame {
 
         jLabel24.setText("Tilesets path :");
 
-        jTextField22.setText("..\\graphics\\maps\\maptilesets\\maptileset");
+        jTextField22.setText("..\\..\\..\\graphics\\maps\\maptilesets\\maptileset");
         jTextField22.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextField22ActionPerformed(evt);
@@ -1150,45 +1150,63 @@ public class MainEditor extends javax.swing.JFrame {
 
     private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
         
-        String toolDir = System.getProperty("user.dir");
-        Path toolPath = Paths.get(toolDir);
-        
-        String mapPath = jTextField24.getText();
-        if(!mapPath.endsWith("\\")){
-            mapPath = mapPath+"\\";
-        }
-        //Path basePath = Paths.get(mapPath).toAbsolutePath();
-        System.out.println(toolPath.toString());
-        Path basePath = toolPath.resolve(Paths.get(mapPath)).normalize();
-        System.out.println(basePath.toString());
-        Path tPath = Paths.get(jTextField23.getText());
-        Path tilesetsPath;
-        if(!tPath.isAbsolute()){
-           tilesetsPath = basePath.resolve(tPath).normalize();
-        }else{
-            tilesetsPath = tPath;
-        }
-        System.out.println(tilesetsPath.toString());
-        Path bPath = Paths.get(jTextField19.getText());
-        Path blocksetPath;
-        if(!bPath.isAbsolute()){
-           blocksetPath = basePath.resolve(bPath).normalize();
-        }else{
-            blocksetPath = bPath;
-        }
-        System.out.println(blocksetPath.toString());
-        Path lPath = Paths.get(jTextField20.getText());
-        Path layoutPath;
-        if(!lPath.isAbsolute()){
-           layoutPath = basePath.resolve(lPath).normalize();
-        }else{
-            layoutPath = lPath;
-        }        
-        System.out.println(layoutPath.toString());
-        
         try {
+            String toolDir = System.getProperty("user.dir");
+            Path toolPath = Paths.get(toolDir);
+
+            String mapPath = jTextField24.getText();
+            if(!mapPath.endsWith("\\")){
+                mapPath = mapPath+"\\";
+            }
+            //Path basePath = Paths.get(mapPath).toAbsolutePath();
+            System.out.println(toolPath.toString());
+            Path basePath = toolPath.resolve(Paths.get(mapPath)).normalize();
+            System.out.println(basePath.toString());
+            
+            Path bPath = Paths.get(jTextField19.getText());
+            Path blocksetPath;
+            if(!bPath.isAbsolute()){
+               blocksetPath = basePath.resolve(bPath).normalize();
+            }else{
+                blocksetPath = bPath;
+            }
+            System.out.println(blocksetPath.toString());
+            Path lPath = Paths.get(jTextField20.getText());
+            Path layoutPath;
+            if(!lPath.isAbsolute()){
+               layoutPath = basePath.resolve(lPath).normalize();
+            }else{
+                layoutPath = lPath;
+            }        
+            System.out.println(layoutPath.toString());
+            
             if(jRadioButton5.isSelected()){
-                maplayoutManager.importDisassembly(jTextField21.getText(),jTextField22.getText(),tilesetsPath.toString(),blocksetPath.toString(),layoutPath.toString());
+                Path dPath = Paths.get(jTextField23.getText());
+                Path mapDataPath;
+                if(!dPath.isAbsolute()){
+                   mapDataPath = basePath.resolve(dPath).normalize();
+                }else{
+                    mapDataPath = dPath;
+                }
+                System.out.println(mapDataPath.toString());
+                Path pPath = Paths.get(jTextField21.getText());
+                Path palettePath;
+                if(!pPath.isAbsolute()){
+                   palettePath = basePath.resolve(pPath).normalize();
+                }else{
+                    palettePath = pPath;
+                }
+                System.out.println(palettePath.toString());
+                Path tPath = Paths.get(jTextField22.getText());
+                Path tilesetsPath;
+                if(!tPath.isAbsolute()){
+                   tilesetsPath = basePath.resolve(tPath).normalize();
+                }else{
+                    tilesetsPath = tPath;
+                }
+                System.out.println(tilesetsPath.toString());
+        
+                maplayoutManager.importDisassembly(palettePath.toString(),tilesetsPath.toString(),mapDataPath.toString(),blocksetPath.toString(),layoutPath.toString());
             } else {
                 maplayoutManager.importDisassembly(jTextField12.getText(),jTextField10.getText(),jTextField13.getText(), jTextField16.getText(),jTextField17.getText(),jTextField18.getText(),blocksetPath.toString(),layoutPath.toString());
             }

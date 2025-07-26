@@ -19,7 +19,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +83,6 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         addMouseListener(this);
         addMouseMotionListener(this);
     }
-   
     
     @Override
     protected void paintComponent(Graphics g) {
@@ -93,9 +91,14 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     }
     
     public BufferedImage buildImage(){
-        if(redraw){
-            currentImage = buildImage(this.layout,this.tilesPerRow, false);
-            setSize(currentImage.getWidth(), currentImage.getHeight());
+        if (redraw) {
+            if (layout == null) {
+                currentImage = null;
+            } else {
+                currentImage = buildImage(this.layout,this.tilesPerRow, false);
+                setSize(currentImage.getWidth(), currentImage.getHeight());
+            }
+            redraw = false;
         }
         return currentImage;
     }
@@ -180,10 +183,9 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             } 
             if(drawGrid){
                 graphics.drawImage(getGridImage(), 0, 0, null);
-            }            
+            }
             if(!pngExport){
                 currentImage = resize(currentImage);
-                redraw = false;
             }
         }
                   
