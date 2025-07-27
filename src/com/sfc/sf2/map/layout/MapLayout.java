@@ -7,6 +7,8 @@ package com.sfc.sf2.map.layout;
 
 import com.sfc.sf2.map.block.MapBlock;
 import com.sfc.sf2.map.block.Tileset;
+import com.sfc.sf2.palette.Palette;
+import java.awt.image.IndexColorModel;
 
 /**
  *
@@ -46,5 +48,20 @@ public class MapLayout {
         this.blocks = blocks;
     }
 
-    
+    public Palette getPalette() {
+        if (blocks == null) {
+            return null;
+        } else {
+            return blocks[0].getPalette();
+        }
+    }
+
+    public IndexColorModel getIcm() {
+        Palette palette = getPalette();
+        if (palette == null) {
+            return null;
+        } else {
+            return palette.getIcm();
+        }
+    }
 }

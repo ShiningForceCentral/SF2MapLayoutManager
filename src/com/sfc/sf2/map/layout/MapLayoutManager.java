@@ -63,9 +63,15 @@ public class MapLayoutManager {
     public void exportDisassembly(String tilesetsPath, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Exporting disassembly ...");
         disassemblyManager.exportDisassembly(blocks, blocksPath, layout, layoutPath);
-        disassemblyManager.exportTilesetsFile(tilesetsPath, layout.getTilesets()[0].getTiles()[0].getPalette(), layout.getTilesets());
+        disassemblyManager.exportTilesetsFile(tilesetsPath, layout.getPalette(), layout.getTilesets());
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly exported.");        
-    }   
+    }
+    
+    public void exportDisassembly(String blocksPath, String layoutPath){
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Exporting disassembly ...");
+        disassemblyManager.exportDisassembly(blocks, blocksPath, layout, layoutPath);
+        System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly exported.");        
+    }
     
     public void importRom(String romFilePath, String paletteOffset, String paletteLength, String graphicsOffset, String graphicsLength){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importOriginalRom() - Importing original ROM ...");
