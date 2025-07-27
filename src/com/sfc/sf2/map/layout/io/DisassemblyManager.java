@@ -5,10 +5,9 @@
  */
 package com.sfc.sf2.map.layout.io;
 
-import com.sfc.sf2.graphics.Tile;
 import com.sfc.sf2.map.layout.MapLayout;
 import com.sfc.sf2.map.block.MapBlock;
-import java.awt.Color;
+import com.sfc.sf2.map.block.Tileset;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -19,8 +18,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.sfc.sf2.map.layout.DisassemblyException;
+import com.sfc.sf2.palette.Palette;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -47,10 +48,7 @@ public class DisassemblyManager {
     private int blockCursor;
 
     MapBlock[][] leftHistoryMap = null;
-    MapBlock[][] upperHistoryMap = null;    
-    
-    Color[] palette = null;
-    Tile[] tileset = null;
+    MapBlock[][] upperHistoryMap = null;
     
     public MapLayout importDisassembly(String palettePath, String tileset1Path, String tileset2Path, String tileset3Path, String tileset4Path, String tileset5Path, String blocksPath, String layoutPath){
         return importDisassembly(palettePath, tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path, blocksPath, layoutPath, null, 0, 0, 0);
@@ -61,9 +59,11 @@ public class DisassemblyManager {
         MapLayout layout = new MapLayout();
         try{
             blockset = blockManager.importDisassembly(palettePath, new String[] { tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path }, blocksPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
+            Tileset[] tilesets = blockManager.getTilesets();
 
             if(blockset!=null){
                 layout = parseLayoutData(blockset, layoutPath);
+                layout.setTilesets(tilesets);
             }
         }catch(Exception e){
              System.err.println("com.sfc.sf2.maplayout.io.DisassemblyManager.importDisassembly() - Error while parsing graphics data : "+e);
@@ -347,19 +347,16 @@ public class DisassemblyManager {
             }        
             inputData = Files.readAllBytes(layoutpath);
             while(blockCursor<64*64){
-                
-                MapBlock block = new MapBlock();
-                
+                                
                 debugSb.append(" ");
+                MapBlock block = null;
                 
                 if(getNextBit()==0){
                     if(getNextBit()==0){
                         /* 00 */
                         //System.out.println("Block=$" + Integer.toHexString(blockCursor)+" - 00 : Output next block from block set.");
                         blocksetCursor++;
-                        block.setTiles(blockSet[blocksetCursor].getTiles());
-                        block.setIndex(blockSet[blocksetCursor].getIndex());
-                        block.setIcm(blockSet[blocksetCursor].getIcm());
+                        block = blockSet[blocksetCursor].clone();
                         applyFlags(block);
                         blocks[blockCursor] = block; 
                         if(blockCursor>0){
@@ -391,12 +388,8 @@ public class DisassemblyManager {
                         int offset = (getNextBit()==1)?1:64;
                         for(int i=0;i<result;i++){
                             if(blockCursor<64*64){
-                                MapBlock copy = new MapBlock();
                                 MapBlock source = blocks[blockCursor-offset];
-                                copy.setTiles(source.getTiles());
-                                copy.setIndex(source.getIndex());
-                                copy.setFlags(source.getFlags());
-                                copy.setIcm(source.getIcm());
+                                MapBlock copy = source.clone();
                                 blocks[blockCursor] = copy;
                                 //System.out.println(" Copy of block=$" + Integer.toHexString(blocks[blockCursor].getIndex())+" / "+blocks[blockCursor].getIndex());
                                 blockCursor++;
@@ -480,10 +473,7 @@ public class DisassemblyManager {
                                 //System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = leftHistoryMap[leftBlockCursor][stackTarget];
                             }
-                            block.setTiles(targetBlock.getTiles());
-                            block.setIndex(targetBlock.getIndex());
-                            block.setFlags(targetBlock.getFlags());
-                            block.setIcm(targetBlock.getIcm());
+                            block = targetBlock.clone();
                             break;
                         
                         case COMMAND_UPPERMAP :
@@ -507,10 +497,7 @@ public class DisassemblyManager {
                                 //System.out.println(" Get stack entry "+stackTarget);
                                 targetBlock = upperHistoryMap[upperBlockCursor][stackTarget];
                             }
-                            block.setTiles(targetBlock.getTiles());
-                            block.setIndex(targetBlock.getIndex());
-                            block.setFlags(targetBlock.getFlags());
-                            block.setIcm(targetBlock.getIcm());
+                            block = targetBlock.clone();
                             break;
                             
                         case COMMAND_CUSTOMVALUE :
@@ -522,14 +509,14 @@ public class DisassemblyManager {
                             }
                             //System.out.println(" blocksetCursor=="+blocksetCursor+" / "+Integer.toString(blocksetCursor,2)+", length="+Integer.toString(blocksetCursor,2).length()+", Value="+value);
                             targetBlock = blockSet[value];
-                            block.setTiles(targetBlock.getTiles());
-                            block.setIndex(targetBlock.getIndex());
-                            block.setIcm(targetBlock.getIcm());
+                            block = targetBlock.clone();
                             applyFlags(block);
                             break;
                     }
                     
-                    
+                    if (block == null) {
+                        block = new MapBlock();
+                    }
                     blocks[blockCursor] = block;
 
                     if(blockCursor>0){
@@ -544,9 +531,6 @@ public class DisassemblyManager {
                     }                    
                     
                     blockCursor++;
-                    
-                    
-                    
                 }   
                 
                 //System.out.println(" Output block = $" + Integer.toHexString(block.getIndex())+" / "+block.getIndex());
@@ -674,9 +658,6 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Exporting disassembly ...");
         try { 
             byte[] layoutBytes = produceLayoutBytes(layout);
-            if(tileset!=null){
-                blockManager.setTileset(tileset);
-            }
             blockManager.exportDisassembly(blockset, blocksFilePath);
             Path layoutFilepath = Paths.get(layoutFilePath);
             Files.write(layoutFilepath,layoutBytes);
@@ -687,7 +668,7 @@ public class DisassemblyManager {
             System.out.println(ex);
         }            
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Disassembly exported.");        
-    }     
+    }
     
     private byte[] produceLayoutBytes(MapLayout layout){
         
@@ -1077,6 +1058,49 @@ public class DisassemblyManager {
         }
         return flagBits;
     }
+    
+    public void exportTilesetsFile(String tilesetsFile, Palette palette, Tileset[] tilesets) {
+        System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportTilesetsFile() - Exporting tilesets file ...");
+        try {
+            byte paletteIndex;
+            byte[] tilesetsIndices = new byte[tilesets.length];
+            String paletteNumbers = palette.getName().replaceAll("[^0-9]", "");
+            paletteIndex = paletteNumbers.length() > 0 ? Byte.parseByte(paletteNumbers) : (byte)255;
+            for (int i = 0; i < tilesets.length; i++) {
+                String tilesetNumbers = tilesets[i].getName().replaceAll("[^0-9]", "");
+                tilesetsIndices[i] = tilesetNumbers.length() > 0 ? Byte.parseByte(tilesetNumbers) : (byte)255;
+            }
+            
+            writeTilesetsFile(tilesetsFile, paletteIndex, tilesetsIndices);
+        } catch (Exception ex) {
+            Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportTilesetsFile() - Tilesets file exported ...");
+    }
+    
+    private void writeTilesetsFile(String tilesetsFile, byte paletteIndex, byte[] tilesetsIndices) {
+        try {
+            File outputfile = new File(tilesetsFile);
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n");
+            sb.append("; ASM FILE " + outputfile.getName() + " : ");
+            sb.append("\n");
+            sb.append("\n");
+            sb.append("\t\t\t\tmapPalette  " + paletteIndex);
+            sb.append("\n");
+            for (int i = 0; i < tilesetsIndices.length; i++) {
+                sb.append("\t\t\t\tmapTileset" + (i+1) + " " + tilesetsIndices[i]);
+                sb.append("\n");
+            }
+            
+            FileWriter writer = new FileWriter(outputfile, false);
+            writer.write(sb.toString());
+            writer.close();
+            System.out.println("Tilesets file exported : " + outputfile.getAbsolutePath());
+        } catch (Exception ex) {
+            Logger.getLogger(DisassemblyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public MapBlock[] getBlockset() {
         return blockset;
@@ -1084,13 +1108,5 @@ public class DisassemblyManager {
 
     public void setBlockset(MapBlock[] blockset) {
         this.blockset = blockset;
-    }
-
-    public Tile[] getTileset() {
-        return tileset;
-    }
-
-    public void setTileset(Tile[] tileset) {
-        this.tileset = tileset;
     }
 }

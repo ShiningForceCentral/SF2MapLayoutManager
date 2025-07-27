@@ -8,10 +8,6 @@ package com.sfc.sf2.map.layout;
 import com.sfc.sf2.graphics.GraphicsManager;
 import com.sfc.sf2.map.block.MapBlock;
 import com.sfc.sf2.map.layout.io.DisassemblyManager;
-import com.sfc.sf2.map.layout.io.PngManager;
-import com.sfc.sf2.palette.PaletteManager;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 /**
  *
@@ -19,8 +15,7 @@ import java.io.IOException;
  */
 public class MapLayoutManager {
        
-    private PaletteManager paletteManager = new PaletteManager();
-    private GraphicsManager graphicsManager = new GraphicsManager();
+    private final GraphicsManager graphicsManager = new GraphicsManager();
     private DisassemblyManager disassemblyManager = null;
     private MapBlock[] blocks;
     private MapLayout layout;
@@ -65,9 +60,10 @@ public class MapLayoutManager {
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassemblyFromEntryFiles() - Disassembly imported.");
     }
     
-    public void exportDisassembly(String blocksPath, String layoutPath){
+    public void exportDisassembly(String tilesetsPath, String blocksPath, String layoutPath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Exporting disassembly ...");
         disassemblyManager.exportDisassembly(blocks, blocksPath, layout, layoutPath);
+        disassemblyManager.exportTilesetsFile(tilesetsPath, layout.getTilesets()[0].getTiles()[0].getPalette(), layout.getTilesets());
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.importDisassembly() - Disassembly exported.");        
     }   
     
@@ -81,11 +77,11 @@ public class MapLayoutManager {
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.exportOriginalRom() - Exporting original ROM ...");
         graphicsManager.exportRom(originalRomFilePath, graphicsOffset, GraphicsManager.COMPRESSION_BASIC);
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.exportOriginalRom() - Original ROM exported.");        
-    }      
+    }
     
     public void exportPng(String filepath){
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.exportPng() - Exporting PNG ...");
-        PngManager.exportPng(layout, filepath);
+        com.sfc.sf2.map.block.io.RawImageManager.exportRawImage(layout.getBlocks(), filepath, 64, com.sfc.sf2.graphics.io.RawImageManager.FILE_FORMAT_PNG);
         System.out.println("com.sfc.sf2.maplayout.MapLayoutManager.exportPng() - PNG exported.");       
     }
 
@@ -104,7 +100,4 @@ public class MapLayoutManager {
     public void setBlockset(MapBlock[] blockset) {
         this.blockset = blockset;
     }
-    
-    
-    
 }

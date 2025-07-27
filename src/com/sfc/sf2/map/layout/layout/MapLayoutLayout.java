@@ -95,7 +95,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             if (layout == null) {
                 currentImage = null;
             } else {
-                currentImage = buildImage(this.layout,this.tilesPerRow, false);
+                currentImage = buildImage(this.layout,this.tilesPerRow);
                 setSize(currentImage.getWidth(), currentImage.getHeight());
             }
             redraw = false;
@@ -103,13 +103,10 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
         return currentImage;
     }
     
-    public BufferedImage buildImage(MapLayout layout, int tilesPerRow, boolean pngExport){
+    public BufferedImage buildImage(MapLayout layout, int tilesPerRow){
         renderCounter++;
         System.out.println("Map render "+renderCounter);
         this.layout = layout;
-        if(pngExport){
-            redraw = true;
-        }
         if(redraw){
             MapBlock[] blocks = layout.getBlocks();
             int imageHeight = 64*3*8;
@@ -118,13 +115,9 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             for(int y=0;y<64;y++){
                 for(int x=0;x<64;x++){
                     MapBlock block = blocks[y*64+x];
-                    BufferedImage blockImage = block.getImage();
+                    BufferedImage blockImage = block.getIndexedColorImage();
                     BufferedImage explorationFlagImage = block.getExplorationFlagImage();
                     BufferedImage interactionFlagImage = block.getInteractionFlagImage();
-                    if(pngExport||blockImage==null){
-                        block.updatePixels();
-                        blockImage = block.getIndexedColorImage();
-                    }
                     graphics.drawImage(blockImage, x*3*8, y*3*8, null);
                     if(drawExplorationFlags || drawInteractionFlags){ 
                         if(drawExplorationFlags){
@@ -184,9 +177,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             if(drawGrid){
                 graphics.drawImage(getGridImage(), 0, 0, null);
             }
-            if(!pngExport){
-                currentImage = resize(currentImage);
-            }
+            currentImage = resize(currentImage);
         }
                   
         return currentImage;
@@ -616,7 +607,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
             action[1] = y*64+x;
             action[2] = block.getIndex();
             block.setIndex(value);
-            block.setImage(null);
+            block.clearIndexedColorImage();
             block.setTiles(blockset[block.getIndex()].getTiles());
             actions.add(action);
             redraw = true;
@@ -648,7 +639,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
                     {
                         MapBlock block = layout.getBlocks()[action[1]];
                         block.setIndex(action[2]);
-                        block.setImage(null);
+                        block.clearIndexedColorImage();
                         block.setTiles(blockset[block.getIndex()].getTiles());
                         actions.remove(actions.size()-1);
                         redraw = true;
@@ -764,6 +755,4 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     public void setLeftSlot(BlockSlotPanel leftSlot) {
         this.leftSlot = leftSlot;
     }
-    
-    
 }
