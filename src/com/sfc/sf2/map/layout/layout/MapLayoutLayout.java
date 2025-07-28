@@ -92,7 +92,7 @@ public class MapLayoutLayout extends JPanel implements MouseListener, MouseMotio
     
     public BufferedImage buildImage(){
         if (redraw) {
-            if (layout == null) {
+            if (layout == null || layout.getBlocks() == null) {
                 currentImage = null;
             } else {
                 currentImage = buildImage(this.layout,this.tilesPerRow);
