@@ -44,6 +44,7 @@ public class DisassemblyManager {
     private StringBuilder debugSb = null;
     
     MapBlock[] blockset = null;
+    Tileset[] tilesets = null;
     private int blocksetCursor;
     private int blockCursor;
 
@@ -59,7 +60,7 @@ public class DisassemblyManager {
         MapLayout layout = new MapLayout();
         try{
             blockset = blockManager.importDisassembly(palettePath, new String[] { tileset1Path, tileset2Path, tileset3Path, tileset4Path, tileset5Path }, blocksPath, animationTilesetPath, animFrameStart, animFrameLength, animFrameDest);
-            Tileset[] tilesets = blockManager.getTilesets();
+            tilesets = blockManager.getTilesets();
 
             if(blockset!=null){
                 layout = parseLayoutData(blockset, layoutPath);
@@ -654,11 +655,11 @@ public class DisassemblyManager {
         return bit;
     }
 
-    public void exportDisassembly(MapBlock[] blocks, String blocksFilePath, MapLayout layout, String layoutFilePath){
+    public void exportDisassembly(MapBlock[] blocks, Tileset[] tilesets, String blocksFilePath, MapLayout layout, String layoutFilePath){
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportDisassembly() - Exporting disassembly ...");
         try { 
             byte[] layoutBytes = produceLayoutBytes(layout);
-            blockManager.exportDisassembly(blockset, blocksFilePath);
+            blockManager.exportDisassembly(blockset, tilesets, blocksFilePath);
             Path layoutFilepath = Paths.get(layoutFilePath);
             Files.write(layoutFilepath,layoutBytes);
             System.out.println(layoutBytes.length + " bytes into " + layoutFilepath);
@@ -1108,5 +1109,13 @@ public class DisassemblyManager {
 
     public void setBlockset(MapBlock[] blockset) {
         this.blockset = blockset;
+    }
+
+    public Tileset[] getTilesets() {
+        return tilesets;
+    }
+
+    public void setTilesets(Tileset[] tilesets) {
+        this.tilesets = tilesets;
     }
 }
