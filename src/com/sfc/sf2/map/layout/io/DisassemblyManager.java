@@ -1063,13 +1063,17 @@ public class DisassemblyManager {
     public void exportTilesetsFile(String tilesetsFile, Palette palette, Tileset[] tilesets) {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportTilesetsFile() - Exporting tilesets file ...");
         try {
-            byte paletteIndex;
-            byte[] tilesetsIndices = new byte[tilesets.length];
+            int paletteIndex;
+            int[] tilesetsIndices = new int[tilesets.length];
             String paletteNumbers = palette.getName().replaceAll("[^0-9]", "");
-            paletteIndex = paletteNumbers.length() > 0 ? Byte.parseByte(paletteNumbers) : (byte)255;
+            paletteIndex = paletteNumbers.length() > 0 ? Byte.parseByte(paletteNumbers) : 255;
             for (int i = 0; i < tilesets.length; i++) {
-                String tilesetNumbers = tilesets[i].getName().replaceAll("[^0-9]", "");
-                tilesetsIndices[i] = tilesetNumbers.length() > 0 ? Byte.parseByte(tilesetNumbers) : (byte)255;
+                if (tilesets[i] == null || tilesets[i].isTilesetEmpty()) {
+                    tilesetsIndices[i] = 255;
+                } else {
+                    String tilesetNumbers = tilesets[i].getName().replaceAll("[^0-9]", "");
+                    tilesetsIndices[i] = tilesetNumbers.length() > 0 ? Byte.parseByte(tilesetNumbers) : 255;
+                }
             }
             
             writeTilesetsFile(tilesetsFile, paletteIndex, tilesetsIndices);
@@ -1079,12 +1083,14 @@ public class DisassemblyManager {
         System.out.println("com.sfc.sf2.maplayout.io.DisassemblyManager.exportTilesetsFile() - Tilesets file exported ...");
     }
     
-    private void writeTilesetsFile(String tilesetsFile, byte paletteIndex, byte[] tilesetsIndices) {
+    private void writeTilesetsFile(String tilesetsFile, int paletteIndex, int[] tilesetsIndices) {
         try {
             File outputfile = new File(tilesetsFile);
+            int matchIndex = tilesetsFile.indexOf("data\\maps\\");
+            String filenameString = matchIndex == -1 ? outputfile.getName() : tilesetsFile.substring(matchIndex);
             StringBuilder sb = new StringBuilder();
             sb.append("\n");
-            sb.append("; ASM FILE " + outputfile.getName() + " : ");
+            sb.append("; ASM FILE " + filenameString + " : ");
             sb.append("\n");
             sb.append("\n");
             sb.append("\t\t\t\tmapPalette  " + paletteIndex);
